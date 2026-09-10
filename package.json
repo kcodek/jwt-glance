@@ -1,0 +1,71 @@
+{
+  "name": "jwt-glance",
+  "displayName": "JWT Glance",
+  "description": "Zero-click ambient JWT inspection lens for VS Code",
+  "version": "0.1.0",
+  "publisher": "jwt-glance",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jwt-glance/jwt-glance.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=18.0.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "jwtGlance.inspectToken",
+        "title": "JWT Glance: Inspect Credential"
+      }
+    ],
+    "configuration": {
+      "title": "JWT Glance",
+      "properties": {
+        "jwtGlance.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable JWT Glance ambient inspection."
+        },
+        "jwtGlance.position": {
+          "type": "string",
+          "enum": ["top", "left"],
+          "default": "top",
+          "description": "Where to render the JWT glance badge: 'top' (CodeLens above the line) or 'left' (inline badge before token)."
+        },
+        "jwtGlance.maxLineLength": {
+          "type": "number",
+          "default": 10000,
+          "description": "Maximum line length to scan for candidate JWTs."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./tsconfig.json --noEmit",
+    "build": "node esbuild.js",
+    "build:prod": "node esbuild.js --production",
+    "test:compile": "tsc -p ./tsconfig.test.json",
+    "test:run": "node --test out/test/**/*.test.js",
+    "test": "npm run test:compile && npm run test:run",
+    "inspect": "npm run test:compile && node scripts/inspect.js",
+    "package": "npm run build:prod && vsce package --no-dependencies"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.3"
+  }
+}
