@@ -4,7 +4,7 @@
 
 ## 1. Core Architectural Strategy & Invariants
 
-```
+```text
                              JWT GLANCE CORE
             ┌───────────────────────────────────────────────┐
             │ Pure TypeScript • Zero External Dependencies  │
@@ -85,7 +85,7 @@ export type TokenAssessment = UnrecognizedToken | RecognizedToken;
 
 ## 3. Phase-Wise Implementation Roadmap
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ PHASE 1: Human Ambient Core (V1)                            │
 │ Inlay hints before token, hover card, live refresh timer    │

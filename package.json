@@ -24,6 +24,18 @@
   "contributes": {
     "commands": [
       {
+        "command": "jwtGlance.inspectAtCursor",
+        "title": "JWT Glance: Inspect Token at Cursor"
+      },
+      {
+        "command": "jwtGlance.inspectFromClipboard",
+        "title": "JWT Glance: Inspect Token from Clipboard"
+      },
+      {
+        "command": "jwtGlance.toggleEnabled",
+        "title": "JWT Glance: Toggle Ambient Lens"
+      },
+      {
         "command": "jwtGlance.inspectToken",
         "title": "JWT Glance: Inspect Credential"
       }

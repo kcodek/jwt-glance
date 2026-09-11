@@ -14,6 +14,7 @@ JWT Glance automatically surfaces JWT expiration countdowns, algorithm informati
   - **Open Decoded Token in New Editor:** Opens a dedicated, formatted JSON editor tab with syntax highlighting, searchability, and folding.
   - **Copy Actions:** Copy full decoded payload JSON or raw token string.
   - **Single-Click Claim Copying:** Copy individual claims directly (`Subject`, `Roles`, `Issuer`, `Audience`, `Expiration`) to clipboard with confirmation.
+- ⌨️ **Command Palette & Zero-Leak Clipboard Inspection (`Cmd+Shift+P`):** Inspect tokens at cursor, safely decode tokens straight from the clipboard in memory without touching disk, or toggle ambient badges with one keystroke.
 - 🔍 **Rich Sanitized Hover Card:** Hover over any token to inspect decoded headers, clean claim tables (`iss`, `sub`, `aud`, `roles`), and formatted payload JSON with an unverified signature notice (`Signature: Not performed`).
 - 🛡️ **Credential Isolation:** Pure local execution. Raw secret strings are never logged, never transmitted over sockets, and never leaked to external networks.
 - ⏱️ **60-Second Live Timer:** Relative expiration countdowns (`Active 42m` → `Active 41m`) refresh automatically without requiring file edits or typing.
@@ -21,41 +22,102 @@ JWT Glance automatically surfaces JWT expiration countdowns, algorithm informati
 
 ---
 
-## 🚀 How to Run & Use as a Local Extension
+## 🚀 How to Run & Use in VS Code
 
-### Step 1: Package the `.vsix`
-Build the production bundle and generate the `.vsix` extension package:
-```bash
-npm run package
+When you run `npm run build:prod` or `npm run build`, esbuild outputs the compiled bundle to:
+```text
+dist/
+├── extension.js        <-- The compiled CommonJS bundle (main entry point)
+└── extension.js.map    <-- Source map for debugging
 ```
-This builds `dist/extension.js` via esbuild and produces `jwt-glance-0.1.0.vsix` (an ultra-compact ~6.5 KB archive).
+Because VS Code requires extensions to be installed or loaded via the extension host, choose one of the three methods below to run it:
 
-### Step 2: Install into VS Code or Cursor
+---
 
-**Option A — Via Command Line:**
+### Method 1: Package & Install as a `.vsix` (Recommended)
+
+This generates a standalone installable file that works exactly like an extension from the Marketplace.
+
+1. **Package the extension** (from the project root, not inside `dist`):
+   ```bash
+   $ npm run package
+   ```
+   This compiles the bundle and creates **`jwt-glance-0.1.0.vsix`** in the repository root directory (`./jwt-glance-0.1.0.vsix`).
+
+2. **Install it into VS Code or Cursor:**
+   - **Via Terminal:**
+     ```sh
+     # In VS Code
+     code --install-extension jwt-glance-0.1.0.vsix
+
+     # In Cursor
+     cursor --install-extension jwt-glance-0.1.0.vsix
+     ```
+   - **Via GUI:**
+     1. Open VS Code or Cursor.
+     2. Press `Cmd+Shift+X` (macOS) or `Ctrl+Shift+X` (Windows/Linux) to open the **Extensions** panel.
+     3. Click the `...` menu (Views and More Actions) in the top-right corner of the Extensions sidebar.
+     4. Select **Install from VSIX...**.
+     5. Choose `jwt-glance-0.1.0.vsix`.
+
+3. **Reload VS Code** if prompted.
+
+---
+
+### Method 2: Direct Symlink (Fastest for Local Development)
+
+You can link this folder directly into your VS Code extensions folder so any future `npm run build` is immediately active without repackaging:
+
 ```bash
-# In VS Code
-code --install-extension jwt-glance-0.1.0.vsix
+# For standard VS Code:
+ln -s "$(pwd)" ~/.vscode/extensions/jwt-glance
 
-# In Cursor
-cursor --install-extension jwt-glance-0.1.0.vsix
+# For Cursor:
+ln -s "$(pwd)" ~/.cursor/extensions/jwt-glance
+
+# For VS Code Insiders:
+ln -s "$(pwd)" ~/.vscode-insiders/extensions/jwt-glance
 ```
 
-**Option B — Via the Editor GUI:**
-1. Open VS Code or Cursor.
-2. Open the **Extensions** view (`Cmd+Shift+X` on macOS or `Ctrl+Shift+X` on Windows/Linux).
-3. Click the `...` menu (Views and More Actions) in the top-right corner of the Extensions panel.
-4. Select **Install from VSIX...**.
-5. Select `jwt-glance-0.1.0.vsix`.
+After creating the link:
+1. Run `npm run build` (or `npm run build:prod`).
+2. In VS Code, press `Cmd+Shift+P` and select **`Developer: Reload Window`**.
+3. JWT Glance is now active!
 
-### Step 3: Test the Ambient Inlay Hints & Hover
-1. Open the included fixture file [`test/fixtures/sample.env`](file:///Users/kishu/coding/github/jwt-glance/test/fixtures/sample.env) or any `.env` file containing tokens.
-2. Notice the inline badge rendered immediately before each token:
-   - Active tokens show: `[JWT · user-42 · Active 42m]`
-   - Expired tokens show: `[JWT · service-account-01 · Expired 8m]`
-   - Unsecured tokens show: `[JWT · UNSECURED alg:none · local-dev-user · Active 42m]`
-   - Tokens without a subject show: `[JWT · Active 42m]`
-3. Hover your cursor over any token to view the decoded claims table and payload, or click the badge to open the Action Palette.
+---
+
+### Method 3: Extension Development Host (`F5` Debugging)
+
+To test changes in a clean, isolated development window without installing anything:
+
+1. Open this repository root folder in VS Code:
+   ```bash
+   code .
+   ```
+2. Press **`F5`** (or go to **Run and Debug** `Cmd+Shift+D` and click the green play button).
+3. A separate **[Extension Development Host]** window will open with JWT Glance running live.
+4. Press `Cmd+R` inside the guest window anytime you rebuild to reload changes.
+
+---
+
+### ✅ Verifying It Works in VS Code
+
+1. **Verify Ambient Badges:** Open [`test/fixtures/sample.env`](test/fixtures/sample.env) or [`test/fixtures/sample.http`](test/fixtures/sample.http). You will see the live badges above or before the tokens (e.g. `[JWT · user-42 · Active 42m]`).
+2. **Verify Hover:** Hover your mouse over any token to see the decoded claims table and payload.
+3. **Verify Action Palette:** Click any badge to open the quick copy and tab preview menu.
+4. **Verify Command Palette:** Press `Cmd+Shift+P`, type `JWT Glance`, and run `JWT Glance: Inspect Token at Cursor` or `JWT Glance: Inspect Token from Clipboard`.
+
+---
+
+## ⌨️ Command Palette Actions (`Cmd+Shift+P` / `Ctrl+Shift+P`)
+
+Access quick commands anytime without needing to click with the mouse:
+
+| Command | Description |
+| :--- | :--- |
+| **`JWT Glance: Inspect Token at Cursor`** | Evaluates token under the cursor or active text selection and opens the Action Palette. If no token is at cursor, prompts to inspect clipboard. |
+| **`JWT Glance: Inspect Token from Clipboard`** | **Zero-leak mode:** Reads and decodes a JWT straight from the system clipboard into memory, opening claims and decoded JSON without pasting secrets into project files. |
+| **`JWT Glance: Toggle Ambient Lens`** | Instantly toggles ambient CodeLens and inline badges on or off. |
 
 ---
 
@@ -68,11 +130,11 @@ Run the extension in a temporary, isolated VS Code window directly from source c
 
 1. Open this repository in VS Code:
    ```bash
-   code /Users/kishu/coding/github/jwt-glance
+   code .
    ```
 2. Press **`F5`** (or open the **Run & Debug** tab `Cmd+Shift+D` and click **"Run Extension (Development Host)"**).
 3. An **[Extension Development Host]** VS Code window will launch with JWT Glance active.
-4. In that development window, open [`test/fixtures/sample.env`](file:///Users/kishu/coding/github/jwt-glance/test/fixtures/sample.env) to see live inlay badges and hover cards.
+4. In that development window, open [`test/fixtures/sample.env`](test/fixtures/sample.env) to see live inlay badges and hover cards.
 5. Any source changes you make in `src/` can be reloaded instantly in the guest window via `Cmd+R` (or `Developer: Reload Window`).
 
 ---
@@ -160,6 +222,116 @@ Customize JWT Glance behavior in your VS Code `settings.json`:
 | `jwtGlance.enabled` | `boolean` | `true` | Enable or disable ambient glance badges and hover cards. |
 | `jwtGlance.position` | `'top' \| 'left'` | `'top'` | Badge position: `'top'` renders above the line (CodeLens), `'left'` renders inline before the token. |
 | `jwtGlance.maxLineLength` | `number` | `10000` | Maximum character length of a line to scan (prevents lag on minified files). |
+
+---
+
+## 🚢 Best Practices: How to Publish & Ship to VS Code Extensions
+
+Follow this production checklist to publish **JWT Glance** to both the **Visual Studio Marketplace** (for official VS Code) and the **Open VSX Registry** (for Cursor, VSCodium, Gitpod, and Eclipse Theia).
+
+### 1. Prerequisites: Publisher Accounts & Tokens
+
+#### A. Visual Studio Marketplace (Microsoft)
+1. Navigate to the [Visual Studio Marketplace Management Portal](https://marketplace.visualstudio.com/manage).
+2. Sign in with your Microsoft account and create a unique **Publisher ID** (e.g. `your-name` or `your-org`).
+3. Generate a **Personal Access Token (PAT)** in [Azure DevOps](https://dev.azure.com):
+   - Set Organization to `All accessible organizations`.
+   - Set Scopes to `Marketplace > Manage`.
+   - Copy and securely store the token.
+
+#### B. Open VSX Registry (Eclipse Foundation / Cursor)
+1. Sign up on [Open-VSX.org](https://open-vsx.org) using GitHub.
+2. Create a namespace matching your publisher ID.
+3. Generate an Access Token in your Open VSX account settings.
+
+---
+
+### 2. Manifest Preparation (`package.json`)
+
+Ensure your `package.json` contains valid publisher and discovery metadata:
+
+- **`publisher`**: Set to your registered Publisher ID.
+- **`icon`**: Add a 128×128 square PNG (e.g., `"icon": "images/icon.png"`).
+- **`repository`**: Verify the repository URL is accessible.
+- **`keywords`**: Add high-intent search tags (e.g., `["jwt", "token", "auth", "decoder", "security", "ambient"]`).
+
+---
+
+### 3. Pre-Flight Verification Gate
+
+Always execute this verification pipeline before releasing:
+
+```bash
+# 1. Run full test suite & adversarial corpus
+npm test
+
+# 2. Compile minified production bundle
+npm run build:prod
+
+# 3. Audit files included in package (ensures no tests or secrets leak)
+npx @vscode/vsce ls
+
+# 4. Generate the .vsix package
+npm run package
+```
+
+> [!TIP]
+> Run `npx @vscode/vsce ls` to audit the manifest. Thanks to [`.vscodeignore`](.vscodeignore), only `dist/extension.js`, `package.json`, and `README.md` are packaged—keeping the extension payload ultra-compact (~13 KB).
+
+---
+
+### 4. Manual Publishing via CLI
+
+```bash
+# Log in once with your Azure DevOps PAT:
+npx @vscode/vsce login <your-publisher-id>
+
+# Publish to Visual Studio Marketplace (with semantic version bump):
+npx @vscode/vsce publish patch  # bumps 0.1.0 -> 0.1.1 and publishes immediately
+
+# Dual-publish to Open VSX (for Cursor & VSCodium users):
+npx ovsx publish jwt-glance-0.1.1.vsix -p <YOUR_OPEN_VSX_TOKEN>
+```
+
+---
+
+### 5. Automated CI/CD Shipping with GitHub Actions (Recommended)
+
+Automate release verification and dual-registry publishing whenever a version tag is pushed by adding `.github/workflows/publish.yml`:
+
+```yaml
+name: Publish Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:prod
+
+      - name: Publish to VS Code Marketplace
+        run: npx @vscode/vsce publish --pat ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to Open VSX
+        run: npx ovsx publish -p ${{ secrets.OVSX_PAT }}
+```
+
+**Secrets to configure in your GitHub repository:**
+- `VSCE_PAT`: Your Azure DevOps Marketplace Personal Access Token.
+- `OVSX_PAT`: Your Open VSX Access Token.
 
 ---
 
