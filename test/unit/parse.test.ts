@@ -24,12 +24,27 @@ test('parseJwt successfully decodes alg:none token with empty signature', () => 
   }
 });
 
-test('parseJwt rejects tokens without 3 segments', () => {
-  const result = parseJwt('not.a.token.with.extra.dots');
-  assert.deepEqual(result, { recognized: false, reason: 'NOT_THREE_SEGMENTS' });
+test('parseJwt successfully decodes 2-segment signature-omitted token', () => {
+  const twoPart = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0';
+  const result = parseJwt(twoPart);
+  assert.equal('reason' in result, false);
+  if (!('reason' in result)) {
+    assert.equal(result.header['alg'], 'RS256');
+    assert.equal(result.payload['sub'], '1234567890');
+    assert.equal(result.payload['name'], 'John Doe');
+    assert.equal(result.signature, '');
+  }
+});
 
-  const resultTwo = parseJwt('onlytwo.segments');
-  assert.deepEqual(resultTwo, { recognized: false, reason: 'NOT_THREE_SEGMENTS' });
+test('parseJwt rejects tokens with invalid segment counts (not 2 or 3 segments)', () => {
+  const result = parseJwt('not.a.token.with.extra.dots');
+  assert.deepEqual(result, { recognized: false, reason: 'INVALID_SEGMENT_COUNT' });
+
+  const resultOne = parseJwt('onlyonesegment');
+  assert.deepEqual(resultOne, { recognized: false, reason: 'INVALID_SEGMENT_COUNT' });
+
+  const resultTwoMalformed = parseJwt('onlytwo.segments');
+  assert.deepEqual(resultTwoMalformed, { recognized: false, reason: 'MALFORMED_HEADER' });
 });
 
 test('parseJwt rejects tokens with malformed header JSON or missing alg', () => {

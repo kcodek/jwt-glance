@@ -13,7 +13,7 @@ test('formatRelativeDuration formats minutes, hours, days properly', () => {
   assert.equal(formatRelativeDuration(-120), '2m');
 });
 
-test('formatBadgeLabel formats active token without PII', () => {
+test('formatBadgeLabel formats active token with subject', () => {
   const token: RecognizedToken = {
     recognized: true,
     algorithm: 'HS256',
@@ -25,17 +25,38 @@ test('formatBadgeLabel formats active token without PII', () => {
     notBeforeIso: null,
     issuer: null,
     audience: null,
-    subject: 'secret-user-id',
+    subject: 'user-42',
     roles: ['admin'],
     warnings: [],
     verification: { status: 'NOT_PERFORMED' }
   };
 
   const label = formatBadgeLabel(token);
-  assert.equal(label, 'JWT · Active 42m · HS256');
-  // Ensure PII is not leaked into the badge label
-  assert.ok(!label.includes('secret-user-id'));
+  assert.equal(label, 'JWT · user-42 · Active 42m');
+  // Roles remain in detailed hover only
   assert.ok(!label.includes('admin'));
+});
+
+test('formatBadgeLabel formats token without subject when subject is null', () => {
+  const token: RecognizedToken = {
+    recognized: true,
+    algorithm: 'HS256',
+    isUnsecured: false,
+    temporalStatus: 'ACTIVE',
+    expiresAtIso: '2026-09-10T14:00:00.000Z',
+    secondsUntilExpiration: 2520, // 42m
+    issuedAtIso: null,
+    notBeforeIso: null,
+    issuer: null,
+    audience: null,
+    subject: null,
+    roles: ['admin'],
+    warnings: [],
+    verification: { status: 'NOT_PERFORMED' }
+  };
+
+  const label = formatBadgeLabel(token);
+  assert.equal(label, 'JWT · Active 42m');
 });
 
 test('formatBadgeLabel formats expired token', () => {
@@ -57,7 +78,7 @@ test('formatBadgeLabel formats expired token', () => {
   };
 
   const label = formatBadgeLabel(token);
-  assert.equal(label, 'JWT · Expired 8m · RS256');
+  assert.equal(label, 'JWT · Expired 8m');
 });
 
 test('formatBadgeLabel formats alg:none unsecured token with prominent warning', () => {
@@ -72,12 +93,12 @@ test('formatBadgeLabel formats alg:none unsecured token with prominent warning',
     notBeforeIso: null,
     issuer: null,
     audience: null,
-    subject: null,
+    subject: 'local-dev-user',
     roles: [],
     warnings: [],
     verification: { status: 'NOT_PERFORMED' }
   };
 
   const label = formatBadgeLabel(token);
-  assert.equal(label, 'JWT · UNSECURED alg:none · Active 42m');
+  assert.equal(label, 'JWT · UNSECURED alg:none · local-dev-user · Active 42m');
 });

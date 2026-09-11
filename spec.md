@@ -55,7 +55,7 @@ export type VerificationStatus =
 
 export interface UnrecognizedToken {
   recognized: false;
-  reason: 'NOT_THREE_SEGMENTS' | 'MALFORMED_HEADER' | 'MALFORMED_PAYLOAD';
+  reason: 'INVALID_SEGMENT_COUNT' | 'NOT_THREE_SEGMENTS' | 'MALFORMED_HEADER' | 'MALFORMED_PAYLOAD';
 }
 
 export interface RecognizedToken {
@@ -166,13 +166,13 @@ jwt-glance/
 #### 1.2 Pure Core Engine
 
 * Implement `src/core/detect.ts`:
-* Stage 1: Segment-based boundary check (three dot-separated base64url segments; supports empty third segment for `alg: none`).
+* Stage 1: Segment-based boundary check (supports both 2-segment signature-omitted tokens and 3-segment tokens with empty third segment for `alg: none`).
 * Enforce maximum length sanity threshold (8 KB) to discard non-credential blobs.
 
 
 * Implement `src/core/parse.ts`:
 * Native base64url decoding via `Buffer.from(part, 'base64url')`.
-* Safe JSON parsing for header and payload. Return `UnrecognizedToken` with descriptive reason if invalid.
+* Safe JSON parsing for header and payload. Supports both 2-segment (`header.payload`) and 3-segment (`header.payload.signature`) tokens. Return `UnrecognizedToken` with descriptive reason if invalid.
 
 
 * Implement `src/core/temporal.ts`:
@@ -194,8 +194,8 @@ jwt-glance/
 
 * Implement `src/vscode/inlayHints.ts`:
 * Attach hint immediately **before** the start position of the matched token.
-* Default inline label format: `[JWT · Active 42m · HS256]`, `[JWT · Expired 8m · RS256]`, or `[JWT · UNSECURED alg:none · Active 42m]`.
-* Keep inline labels strictly free of PII (no `sub`, `email`, or `roles` by default).
+* Default inline label format: `[JWT · <subject> · <status>]` (e.g. `[JWT · user-42 · Active 42m]`, `[JWT · Expired 8m]`, or `[JWT · UNSECURED alg:none · local-dev-user · Active 42m]`).
+* Surfaces `sub` to enable instant credential identification while keeping full claim payloads in hover cards and the click action palette.
 
 
 * Implement `src/vscode/hover.ts`:

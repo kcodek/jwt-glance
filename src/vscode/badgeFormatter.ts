@@ -43,9 +43,17 @@ export function formatBadgeLabel(token: RecognizedToken): string {
       break;
   }
 
+  const parts: string[] = ['JWT'];
+
   if (token.isUnsecured) {
-    return `JWT · UNSECURED alg:none · ${statusText}`;
+    parts.push('UNSECURED alg:none');
   }
 
-  return `JWT · ${statusText} · ${token.algorithm}`;
+  if (token.subject && token.subject.trim().length > 0) {
+    parts.push(token.subject.trim());
+  }
+
+  parts.push(statusText);
+
+  return parts.join(' · ');
 }

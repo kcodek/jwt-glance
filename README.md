@@ -8,7 +8,12 @@ JWT Glance automatically surfaces JWT expiration countdowns, algorithm informati
 
 ## ✨ Features
 
-- ⚡ **Zero-Click Inlay Hints:** Inline badges appear immediately before detected tokens in `.env`, `.http`, `.rest`, `.json`, `.yml`, and source files (e.g. `[JWT · Active 42m · HS256]`, `[JWT · Expired 8m · RS256]`, or `[JWT · UNSECURED alg:none · Active 42m]`).
+- ⚡ **Zero-Click Inlay Hints & CodeLens:** Inline badges appear immediately before or above detected tokens in `.env`, `.http`, `.rest`, `.json`, `.yml`, and source files (e.g. `[JWT · user-42 · Active 42m]`, `[JWT · kf1sadmin@... · Expired 2d]`, or `[JWT · UNSECURED alg:none · local-dev-user · Active 42m]`).
+- 🧩 **2- and 3-Segment Format Support:** Accurately recognizes both standard signed 3-segment tokens (`header.payload.signature`) and signature-omitted 2-segment tokens (`header.payload`) commonly used in `.env`, logs, and development mocks.
+- 🎯 **Interactive Action Palette:** Click any badge to open a categorized quick menu:
+  - **Open Decoded Token in New Editor:** Opens a dedicated, formatted JSON editor tab with syntax highlighting, searchability, and folding.
+  - **Copy Actions:** Copy full decoded payload JSON or raw token string.
+  - **Single-Click Claim Copying:** Copy individual claims directly (`Subject`, `Roles`, `Issuer`, `Audience`, `Expiration`) to clipboard with confirmation.
 - 🔍 **Rich Sanitized Hover Card:** Hover over any token to inspect decoded headers, clean claim tables (`iss`, `sub`, `aud`, `roles`), and formatted payload JSON with an unverified signature notice (`Signature: Not performed`).
 - 🛡️ **Credential Isolation:** Pure local execution. Raw secret strings are never logged, never transmitted over sockets, and never leaked to external networks.
 - ⏱️ **60-Second Live Timer:** Relative expiration countdowns (`Active 42m` → `Active 41m`) refresh automatically without requiring file edits or typing.
@@ -46,10 +51,11 @@ cursor --install-extension jwt-glance-0.1.0.vsix
 ### Step 3: Test the Ambient Inlay Hints & Hover
 1. Open the included fixture file [`test/fixtures/sample.env`](file:///Users/kishu/coding/github/jwt-glance/test/fixtures/sample.env) or any `.env` file containing tokens.
 2. Notice the inline badge rendered immediately before each token:
-   - Active tokens show: `[JWT · Active 42m · HS256]`
-   - Expired tokens show: `[JWT · Expired 8m · RS256]`
-   - Unsecured tokens show: `[JWT · UNSECURED alg:none · Active 42m]`
-3. Hover your cursor over any token to view the decoded claims table and payload.
+   - Active tokens show: `[JWT · user-42 · Active 42m]`
+   - Expired tokens show: `[JWT · service-account-01 · Expired 8m]`
+   - Unsecured tokens show: `[JWT · UNSECURED alg:none · local-dev-user · Active 42m]`
+   - Tokens without a subject show: `[JWT · Active 42m]`
+3. Hover your cursor over any token to view the decoded claims table and payload, or click the badge to open the Action Palette.
 
 ---
 
@@ -85,7 +91,7 @@ npm run inspect
 **Terminal Output Preview:**
 ```text
 --- Inlay Hint Badge Preview ---
-[JWT · Active 42m · HS256]
+[JWT · user-42 · Active 42m]
 
 --- Decoded Assessment Object ---
 {
@@ -106,30 +112,19 @@ npm run inspect
 }
 
 --- Hover Card Markdown Preview ---
-### JWT Glance
+### JWT Glance · `ACTIVE` (expires in 42m)
+**Algorithm:** `HS256` &nbsp;|&nbsp; > ℹ️ **Signature: Not performed** *(Local inspection only)*
 
-**Algorithm:** `HS256`
-
-> ℹ️ **Signature: Not performed** *(Local inspection only)*
-
-- **Temporal Status:** `ACTIVE` (expires in 42m)
-- **Expires At:** `2026-09-10T14:00:00.000Z`
-
-#### Key Claims
-| Claim | Value |
-| :--- | :--- |
-| `iss` | https://auth.example.com |
-| `sub` | user-42 |
-| `roles` | admin, developer |
+**Expires:** `2026-09-10T14:00:00.000Z` &nbsp;•&nbsp; **Subject:** `user-42` &nbsp;•&nbsp; **Issuer:** https://auth.example.com &nbsp;•&nbsp; **Roles:** `admin, developer`
 ```
 
 ---
 
-### Approach 3: Automated Test Suite (62 Tests)
+### Approach 3: Automated Test Suite (77 Tests)
 Run the full test suite via Node's native test runner (`node:test`):
 
 ```bash
-# Run all 62 tests (unit, syntax scanner, security vectors, performance, and corpus)
+# Run all 77 tests (unit, syntax scanner, security vectors, performance, and corpus)
 npm test
 ```
 
@@ -172,7 +167,7 @@ Customize JWT Glance behavior in your VS Code `settings.json`:
 
 - **Hexagonal Separation:** Pure TypeScript evaluation logic in `src/core/` contains **zero** dependencies and **zero** imports from `vscode` or Node filesystem modules.
 - **Strict Trust Semantics:** Unverified tokens are labeled `Signature: Not performed` to prevent false senses of cryptographic security.
-- **Privacy by Default:** Inlay hint badges never display PII claims (`sub`, `email`, or `roles`) inline to ensure privacy during screen shares.
+- **High-Signal Ambient Badges:** Inlay badges prioritize credential identity (`sub`) and temporal freshness (`Active` / `Expired`), keeping full claim payloads safely tucked into the hover card and interactive action palette.
 
 ---
 

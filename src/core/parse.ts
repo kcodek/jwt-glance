@@ -23,10 +23,10 @@ function decodeBase64UrlJson(segment: string): Record<string, unknown> | null {
 
 export function parseJwt(token: string): ParseJwtResult {
   const parts = token.split('.');
-  if (parts.length !== 3) {
+  if (parts.length !== 2 && parts.length !== 3) {
     return {
       recognized: false,
-      reason: 'NOT_THREE_SEGMENTS'
+      reason: 'INVALID_SEGMENT_COUNT'
     };
   }
 
@@ -34,7 +34,7 @@ export function parseJwt(token: string): ParseJwtResult {
   if (!headerB64 || !payloadB64) {
     return {
       recognized: false,
-      reason: 'NOT_THREE_SEGMENTS'
+      reason: 'INVALID_SEGMENT_COUNT'
     };
   }
 

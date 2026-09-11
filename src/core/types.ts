@@ -19,7 +19,7 @@ export type VerificationStatus =
 
 export interface UnrecognizedToken {
   recognized: false;
-  reason: 'NOT_THREE_SEGMENTS' | 'MALFORMED_HEADER' | 'MALFORMED_PAYLOAD';
+  reason: 'INVALID_SEGMENT_COUNT' | 'NOT_THREE_SEGMENTS' | 'MALFORMED_HEADER' | 'MALFORMED_PAYLOAD';
 }
 
 export interface RecognizedToken {

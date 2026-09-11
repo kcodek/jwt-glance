@@ -6,9 +6,9 @@ export interface CandidateToken {
   endIndex: number;
 }
 
-// Regex matching candidate 3-segment dot-separated strings
-// Allows empty 3rd segment for alg: none
-const CANDIDATE_REGEX = /(?:^|[^A-Za-z0-9_.-])([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*)(?=[^A-Za-z0-9_.-]|$)/g;
+// Regex matching candidate 2- or 3-segment dot-separated strings
+// Allows 2 segments (signature omitted) or 3 segments (including empty 3rd segment for alg: none)
+const CANDIDATE_REGEX = /(?:^|[^A-Za-z0-9_.-])([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]*)?)(?=[^A-Za-z0-9_.-]|$)/g;
 
 export function findCandidateTokens(text: string): CandidateToken[] {
   if (!text || text.length === 0) {
@@ -30,9 +30,9 @@ export function findCandidateTokens(text: string): CandidateToken[] {
       continue;
     }
 
-    // Verify it contains exactly 2 dots (3 segments)
+    // Verify it contains 2 or 3 segments
     const segments = rawMatch.split('.');
-    if (segments.length !== 3) {
+    if (segments.length !== 2 && segments.length !== 3) {
       continue;
     }
 

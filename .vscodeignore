@@ -9,3 +9,4 @@ spec.md
 .gitignore
 .git/**
 **/*.map
+.env*

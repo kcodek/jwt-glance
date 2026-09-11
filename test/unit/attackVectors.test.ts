@@ -50,23 +50,25 @@ test('Primitive payloads (string, number, boolean) are rejected as MALFORMED_PAY
   }
 });
 
-test('Segment count boundary checks (1, 2, 4, 5 segments) return NOT_THREE_SEGMENTS', () => {
+test('Segment count boundary checks (1, 4, 5 segments) return INVALID_SEGMENT_COUNT', () => {
   const badSegmentTokens = [
     'onlyonesegment',
-    'two.segments',
     'one.two.three.four',
     'one.two.three.four.five'
   ];
   for (const token of badSegmentTokens) {
     const result = parseJwt(token);
-    assert.deepEqual(result, { recognized: false, reason: 'NOT_THREE_SEGMENTS' });
+    assert.deepEqual(result, { recognized: false, reason: 'INVALID_SEGMENT_COUNT' });
   }
 });
 
-test('Empty header or empty payload returns NOT_THREE_SEGMENTS', () => {
-  assert.deepEqual(parseJwt('..sig'), { recognized: false, reason: 'NOT_THREE_SEGMENTS' });
-  assert.deepEqual(parseJwt('header..sig'), { recognized: false, reason: 'NOT_THREE_SEGMENTS' });
-  assert.deepEqual(parseJwt('.payload.sig'), { recognized: false, reason: 'NOT_THREE_SEGMENTS' });
+test('Empty header or empty payload returns INVALID_SEGMENT_COUNT', () => {
+  assert.deepEqual(parseJwt('..sig'), { recognized: false, reason: 'INVALID_SEGMENT_COUNT' });
+  assert.deepEqual(parseJwt('header..sig'), { recognized: false, reason: 'INVALID_SEGMENT_COUNT' });
+  assert.deepEqual(parseJwt('.payload.sig'), { recognized: false, reason: 'INVALID_SEGMENT_COUNT' });
+  assert.deepEqual(parseJwt('.'), { recognized: false, reason: 'INVALID_SEGMENT_COUNT' });
+  assert.deepEqual(parseJwt('header.'), { recognized: false, reason: 'INVALID_SEGMENT_COUNT' });
+  assert.deepEqual(parseJwt('.payload'), { recognized: false, reason: 'INVALID_SEGMENT_COUNT' });
 });
 
 test('ReDoS resilience against adversarial patterns with long repeating characters', () => {

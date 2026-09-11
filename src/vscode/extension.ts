@@ -45,70 +45,179 @@ export function activate(context: vscode.ExtensionContext): void {
         const now = Math.floor(Date.now() / 1000);
         const assessment = assessToken(rawToken, now);
         if (assessment.recognized) {
-          const items: vscode.QuickPickItem[] = [
+          interface JwtActionItem extends vscode.QuickPickItem {
+            action?: () => Promise<void> | void;
+          }
+
+          const copyButton: vscode.QuickInputButton = {
+            iconPath: new vscode.ThemeIcon('copy'),
+            tooltip: 'Copy to clipboard'
+          };
+
+          const items: (JwtActionItem | vscode.QuickPickItem)[] = [
             {
-              label: `$(key) ${formatBadgeLabel(assessment)}`,
-              description: assessment.isUnsecured ? '⚠️ UNSECURED (alg:none)' : `Alg: ${assessment.algorithm}`,
-              detail: assessment.expiresAtIso ? `Expires: ${assessment.expiresAtIso}` : 'No expiration claim'
+              label: 'Actions',
+              kind: vscode.QuickPickItemKind.Separator
+            },
+            {
+              label: '$(json) Open Decoded Token in New Editor',
+              description: 'View full formatted header and payload JSON in a dedicated editor tab',
+              action: async () => {
+                const parsed = parseJwt(rawToken);
+                if (!('reason' in parsed)) {
+                  const content = JSON.stringify(
+                    {
+                      _summary: {
+                        algorithm: assessment.algorithm,
+                        temporalStatus: assessment.temporalStatus,
+                        expiresAtIso: assessment.expiresAtIso,
+                        secondsUntilExpiration: assessment.secondsUntilExpiration,
+                        subject: assessment.subject,
+                        issuer: assessment.issuer,
+                        audience: assessment.audience,
+                        roles: assessment.roles
+                      },
+                      header: parsed.header,
+                      payload: parsed.payload
+                    },
+                    null,
+                    2
+                  );
+                  const doc = await vscode.workspace.openTextDocument({
+                    language: 'json',
+                    content
+                  });
+                  await vscode.window.showTextDocument(doc, { preview: true });
+                }
+              }
+            },
+            {
+              label: '$(clippy) Decoded Payload JSON',
+              description: 'Formatted payload claims',
+              buttons: [copyButton],
+              action: async () => {
+                const parsed = parseJwt(rawToken);
+                if (!('reason' in parsed)) {
+                  await vscode.env.clipboard.writeText(JSON.stringify(parsed.payload, null, 2));
+                  vscode.window.showInformationMessage('JWT Glance: Decoded payload copied to clipboard.');
+                }
+              }
+            },
+            {
+              label: '$(key) Raw Token',
+              description: 'Candidate token string',
+              buttons: [copyButton],
+              action: async () => {
+                await vscode.env.clipboard.writeText(rawToken);
+                vscode.window.showInformationMessage('JWT Glance: Raw token copied to clipboard.');
+              }
             }
           ];
 
+          const claimItems: JwtActionItem[] = [];
+
           if (assessment.subject) {
-            items.push({
+            claimItems.push({
               label: '$(person) Subject (sub)',
-              description: assessment.subject
+              description: assessment.subject,
+              buttons: [copyButton],
+              action: async () => {
+                await vscode.env.clipboard.writeText(assessment.subject!);
+                vscode.window.showInformationMessage(`JWT Glance: Copied Subject (${assessment.subject})`);
+              }
             });
           }
 
           if (assessment.roles.length > 0) {
-            items.push({
+            const rolesStr = assessment.roles.join(', ');
+            claimItems.push({
               label: '$(shield) Roles',
-              description: assessment.roles.join(', ')
+              description: rolesStr,
+              buttons: [copyButton],
+              action: async () => {
+                await vscode.env.clipboard.writeText(rolesStr);
+                vscode.window.showInformationMessage(`JWT Glance: Copied Roles (${rolesStr})`);
+              }
             });
           }
 
           if (assessment.issuer) {
-            items.push({
+            claimItems.push({
               label: '$(globe) Issuer (iss)',
-              description: assessment.issuer
+              description: assessment.issuer,
+              buttons: [copyButton],
+              action: async () => {
+                await vscode.env.clipboard.writeText(assessment.issuer!);
+                vscode.window.showInformationMessage(`JWT Glance: Copied Issuer (${assessment.issuer})`);
+              }
             });
           }
 
           if (assessment.audience) {
             const audStr = Array.isArray(assessment.audience) ? assessment.audience.join(', ') : assessment.audience;
-            items.push({
+            claimItems.push({
               label: '$(organization) Audience (aud)',
-              description: audStr
+              description: audStr,
+              buttons: [copyButton],
+              action: async () => {
+                await vscode.env.clipboard.writeText(audStr);
+                vscode.window.showInformationMessage(`JWT Glance: Copied Audience (${audStr})`);
+              }
             });
           }
 
-          items.push(
-            {
-              label: '$(clippy) Copy Decoded Payload JSON',
-              description: 'Copy formatted payload claims to clipboard'
-            },
-            {
-              label: '$(copy) Copy Raw Token',
-              description: 'Copy candidate token string to clipboard'
-            }
-          );
-
-          const selected = await vscode.window.showQuickPick(items, {
-            title: 'JWT Glance Credential Inspector',
-            placeHolder: 'View claim summary or select an action'
-          });
-
-          if (selected?.label.includes('Copy Decoded Payload JSON')) {
-            const parsed = parseJwt(rawToken);
-            if (!('reason' in parsed)) {
-              await vscode.env.clipboard.writeText(JSON.stringify(parsed.payload, null, 2));
-              vscode.window.showInformationMessage('JWT Glance: Decoded payload copied to clipboard.');
-            }
-          } else if (selected?.label.includes('Copy Raw Token')) {
-            await vscode.env.clipboard.writeText(rawToken);
-            vscode.window.showInformationMessage('JWT Glance: Raw token copied to clipboard.');
+          if (assessment.expiresAtIso) {
+            claimItems.push({
+              label: '$(clock) Expiration (exp)',
+              description: assessment.expiresAtIso,
+              buttons: [copyButton],
+              action: async () => {
+                await vscode.env.clipboard.writeText(assessment.expiresAtIso!);
+                vscode.window.showInformationMessage(`JWT Glance: Copied Expiration (${assessment.expiresAtIso})`);
+              }
+            });
           }
-          return;
+
+          if (claimItems.length > 0) {
+            items.push({
+              label: 'Claims',
+              kind: vscode.QuickPickItemKind.Separator
+            });
+            items.push(...claimItems);
+          }
+
+          return new Promise<void>((resolve) => {
+            const qp = vscode.window.createQuickPick<JwtActionItem>();
+            qp.title = `JWT Glance: [${formatBadgeLabel(assessment)}]`;
+            qp.placeholder = 'Select an action or click copy on any claim';
+            qp.items = items;
+
+            const executeAction = async (item: JwtActionItem) => {
+              qp.hide();
+              if (typeof item.action === 'function') {
+                await item.action();
+              }
+              resolve();
+            };
+
+            qp.onDidAccept(() => {
+              const selected = qp.selectedItems[0];
+              if (selected) {
+                executeAction(selected);
+              }
+            });
+
+            qp.onDidTriggerItemButton((e) => {
+              executeAction(e.item);
+            });
+
+            qp.onDidHide(() => {
+              qp.dispose();
+              resolve();
+            });
+
+            qp.show();
+          });
         }
       }
 

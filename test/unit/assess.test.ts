@@ -40,10 +40,27 @@ test('assessToken correctly identifies roles from roles claim', () => {
   }
 });
 
+test('assessToken returns RecognizedToken for valid 2-segment token', () => {
+  const twoPart = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiZXhwIjoxNTE2MjM5MDIyfQ';
+  const result = assessToken(twoPart, NOW);
+  assert.equal(result.recognized, true);
+  if (result.recognized) {
+    assert.equal(result.algorithm, 'RS256');
+    assert.equal(result.subject, '1234567890');
+    assert.equal(result.temporalStatus, 'ACTIVE');
+  }
+});
+
 test('assessToken returns UnrecognizedToken for invalid input', () => {
   const result = assessToken('invalid.jwt', NOW);
   assert.equal(result.recognized, false);
   if (!result.recognized) {
-    assert.equal(result.reason, 'NOT_THREE_SEGMENTS');
+    assert.equal(result.reason, 'MALFORMED_HEADER');
+  }
+
+  const resultSegments = assessToken('not_enough_segments', NOW);
+  assert.equal(resultSegments.recognized, false);
+  if (!resultSegments.recognized) {
+    assert.equal(resultSegments.reason, 'INVALID_SEGMENT_COUNT');
   }
 });

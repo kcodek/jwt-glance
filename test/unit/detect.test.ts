@@ -24,12 +24,18 @@ test('findCandidateTokens ignores tokens exceeding MAX_TOKEN_LENGTH (8KB)', () =
   assert.equal(candidates.length, 0);
 });
 
+test('findCandidateTokens finds 2-segment signature-omitted JWT in text', () => {
+  const sample = 'TOKEN=eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0 in env';
+  const candidates = findCandidateTokens(sample);
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0]?.raw, 'eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0');
+});
+
 test('findCandidateTokens rejects non-candidates like simple semver or plain text', () => {
   const sample = 'Version 1.2.3 is released with file.name.ext and foo.bar';
   const candidates = findCandidateTokens(sample);
-  // Plain text without valid 3 dot-separated base64url segments should not match or will be rejected
   for (const c of candidates) {
-    // If anything matches, verify it is at least 3 segments
-    assert.equal(c.raw.split('.').length, 3);
+    const len = c.raw.split('.').length;
+    assert.ok(len === 2 || len === 3);
   }
 });
