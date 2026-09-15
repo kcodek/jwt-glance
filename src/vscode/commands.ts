@@ -67,9 +67,13 @@ export async function showJwtActionPalette(
       description: 'Diagnostic token with unverified claims redacted. Intentionally invalid for authentication.',
       buttons: [copyButton],
       action: async () => {
-        const redacted = createSanitizedJwt(rawToken);
-        await vscode.env.clipboard.writeText(redacted);
-        vscode.window.showInformationMessage('JWT Glance: Redacted diagnostic token copied to clipboard.');
+        const redaction = createSanitizedJwt(rawToken);
+        if (redaction.success) {
+          await vscode.env.clipboard.writeText(redaction.token);
+          vscode.window.showInformationMessage('JWT Glance: Redacted diagnostic token copied to clipboard.');
+        } else {
+          vscode.window.showErrorMessage(`JWT Glance: Failed to redact token: ${redaction.reason}`);
+        }
       }
     },
     {
@@ -251,9 +255,13 @@ export async function copyRedactedToken(): Promise<void> {
     return;
   }
 
-  const redacted = createSanitizedJwt(candidate);
-  await vscode.env.clipboard.writeText(redacted);
-  vscode.window.showInformationMessage('JWT Glance: Redacted diagnostic token copied to clipboard.');
+  const redaction = createSanitizedJwt(candidate);
+  if (redaction.success) {
+    await vscode.env.clipboard.writeText(redaction.token);
+    vscode.window.showInformationMessage('JWT Glance: Redacted diagnostic token copied to clipboard.');
+  } else {
+    vscode.window.showErrorMessage(`JWT Glance: Failed to redact token: ${redaction.reason}`);
+  }
 }
 
 /**

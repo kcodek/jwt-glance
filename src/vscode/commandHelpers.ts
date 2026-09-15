@@ -46,10 +46,9 @@ export function resolveTokenAtPosition(
   if (candidates.length === 0) {
     return undefined;
   }
-  const target = candidates.find(
-    (c) => character >= c.startIndex && character <= c.endIndex
+  return candidates.find(
+    (candidate) => character >= candidate.startIndex && character < candidate.endIndex
   );
-  return target ?? candidates[0];
 }
 
 /**

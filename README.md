@@ -280,7 +280,7 @@ npm run package
    git tag v0.1.0
    git push origin v0.1.0
    ```
-3. The release workflow automatically validates that the tag matches `package.json`, runs tests, packages the VSIX, publishes to Visual Studio Marketplace, and drafts a GitHub Release.
+3. The release workflow automatically validates that the tag matches `package.json`, runs tests, packages the VSIX, publishes to Visual Studio Marketplace, and creates a GitHub Release with the VSIX attached.
 
 
 ---

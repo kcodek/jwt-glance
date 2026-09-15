@@ -52,10 +52,6 @@
         "title": "JWT Glance: Copy Redacted Token"
       },
       {
-        "command": "jwtGlance.copySanitizedToken",
-        "title": "JWT Glance: Copy Sanitized Token"
-      },
-      {
         "command": "jwtGlance.toggleEnabled",
         "title": "JWT Glance: Toggle Ambient Lens"
       },
@@ -117,7 +113,7 @@
     "compile": "tsc -p ./tsconfig.json --noEmit",
     "build": "node esbuild.js",
     "build:prod": "node esbuild.js --production",
-    "test:compile": "rm -rf out && tsc -p ./tsconfig.test.json",
+    "test:compile": "node -e \"fs.rmSync('out', { recursive: true, force: true })\" && tsc -p ./tsconfig.test.json",
 
     "test:run": "node --test out/test/**/*.test.js",
     "test": "npm run test:compile && npm run test:run",

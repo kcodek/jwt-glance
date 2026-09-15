@@ -11,28 +11,55 @@ const NOW = 1516239022;
 const TOKEN_A = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWEifQ.signatureA';
 const TOKEN_B = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWIifQ.signatureB';
 
-test('resolveTokenAtPosition resolves encompassing token under cursor', () => {
+test('resolveTokenAtPosition boundary conditions (start, inside, exclusive end, before, after, multiple tokens)', () => {
   const line = `AUTH_PRIMARY="${TOKEN_A}" AUTH_BACKUP="${TOKEN_B}"`;
-  const tokenAIndex = line.indexOf(TOKEN_A);
-  const tokenBIndex = line.indexOf(TOKEN_B);
+  const tokenAStart = line.indexOf(TOKEN_A);
+  const tokenAEnd = tokenAStart + TOKEN_A.length;
+  const tokenBStart = line.indexOf(TOKEN_B);
+  const tokenBEnd = tokenBStart + TOKEN_B.length;
 
-  // Cursor directly inside TOKEN_A
-  const targetA = resolveTokenAtPosition(line, tokenAIndex + 10);
-  assert.ok(targetA);
-  assert.equal(targetA.raw, TOKEN_A);
+  // 1. Cursor before token A -> undefined
+  assert.equal(resolveTokenAtPosition(line, tokenAStart - 1), undefined);
 
-  // Cursor directly inside TOKEN_B
-  const targetB = resolveTokenAtPosition(line, tokenBIndex + 5);
-  assert.ok(targetB);
-  assert.equal(targetB.raw, TOKEN_B);
+  // 2. Cursor at exact token A start -> matches TOKEN_A
+  const atStartA = resolveTokenAtPosition(line, tokenAStart);
+  assert.ok(atStartA);
+  assert.equal(atStartA.raw, TOKEN_A);
+
+  // 3. Cursor inside token A -> matches TOKEN_A
+  const insideA = resolveTokenAtPosition(line, tokenAStart + 10);
+  assert.ok(insideA);
+  assert.equal(insideA.raw, TOKEN_A);
+
+  // 4. Cursor at exclusive end of token A -> undefined
+  assert.equal(resolveTokenAtPosition(line, tokenAEnd), undefined);
+
+  // 5. Cursor between token A and token B -> undefined (no silent fallback to first token!)
+  const midIndex = Math.floor((tokenAEnd + tokenBStart) / 2);
+  assert.equal(resolveTokenAtPosition(line, midIndex), undefined);
+
+  // 6. Cursor at exact token B start -> matches TOKEN_B
+  const atStartB = resolveTokenAtPosition(line, tokenBStart);
+  assert.ok(atStartB);
+  assert.equal(atStartB.raw, TOKEN_B);
+
+  // 7. Cursor inside token B -> matches TOKEN_B
+  const insideB = resolveTokenAtPosition(line, tokenBStart + 5);
+  assert.ok(insideB);
+  assert.equal(insideB.raw, TOKEN_B);
+
+  // 8. Cursor at exclusive end of token B -> undefined
+  assert.equal(resolveTokenAtPosition(line, tokenBEnd), undefined);
+
+  // 9. Cursor after token B -> undefined
+  assert.equal(resolveTokenAtPosition(line, line.length - 1), undefined);
 });
 
-test('resolveTokenAtPosition falls back to first candidate if cursor outside token on same line', () => {
+test('resolveTokenAtPosition returns undefined when cursor is outside token on line with token', () => {
   const line = `export TOKEN="${TOKEN_A}" # some comment`;
-  // Cursor at beginning of line (column 0)
+  // Cursor at beginning of line (column 0) should return undefined (not fallback to TOKEN_A)
   const target = resolveTokenAtPosition(line, 0);
-  assert.ok(target);
-  assert.equal(target.raw, TOKEN_A);
+  assert.equal(target, undefined);
 });
 
 test('resolveTokenAtPosition returns undefined when no candidate exists on line', () => {

@@ -51,8 +51,14 @@ jobs:
       - name: Validate VSIX Contents
         run: npx @vscode/vsce ls
 
+      - name: Verify VSCE_PAT Secret
+        run: |
+          if [ -z "${{ secrets.VSCE_PAT }}" ]; then
+            echo "Error: VSCE_PAT repository secret is required to publish releases to VS Code Marketplace."
+            exit 1
+          fi
+
       - name: Publish to VS Code Marketplace
-        if: env.VSCE_PAT != ''
         run: npx @vscode/vsce publish --pat ${{ secrets.VSCE_PAT }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
