@@ -365,46 +365,45 @@ npm install -g @jwt-glance/mcp
 
 ## 5. TODO & Master Task Checklist
 
-### Sprint 1: Core Engine & Testing (V1) — COMPLETE
+### Sprint 1: Core Engine & Testing (V1 / 0.1.0 Preview) — COMPLETE
 * [x] Initialize repository with strict TypeScript (`strict: true`, `noUncheckedIndexedAccess: true`).
 * [x] Set up empty `"dependencies": {}` and verify esbuild single-file packaging.
-* [x] Implement `src/core/types.ts` with the discriminated union `TokenAssessment`.
+* [x] Implement `src/core/types.ts` with discriminated union `TokenAssessment` and unified 4-state `SignaturePresence` (`PRESENT | EMPTY | ABSENT | UNEXPECTED`).
 * [x] Implement `src/core/detect.ts` with two-stage syntax boundaries and length caps.
-* [x] Implement `src/core/parse.ts` with native base64url decoding and JSON validation.
-* [x] Implement `src/core/temporal.ts` with strict `NumericDate` checks, warning detections, and `INDETERMINATE` status.
-* [x] Implement `src/core/sanitize.ts` with complete Markdown escaping.
-* [x] Author unit test suite (`node:test`) covering RFC samples, edge cases, and injection payloads.
+* [x] Implement `src/core/parse.ts` with native base64url decoding, JSON validation, and 2 vs 3 segment handling.
+* [x] Implement `src/core/temporal.ts` with strict `NumericDate` checks, warning detections, `now === exp` boundary handling, and `INDETERMINATE` status.
+* [x] Implement `src/core/sanitize.ts` with Markdown escaping and strict allowlist diagnostic redaction (`REDACTED_SIGNATURE`).
+* [x] Implement `src/core/filter.ts` with hexagonal pure glob matching, path normalization, and scope gating.
+* [x] Author comprehensive test suite (107 tests across unit, security attack vectors, ReDoS resilience, RFC 7519 compliance, and adversarial corpus).
 
-### Sprint 2: VS Code Presentation Layer (V1) — COMPLETE
-* [x] Implement `src/vscode/lineExpander.ts` for boundary safety.
-* [x] Implement `src/vscode/inlayHints.ts` rendering badges before tokens with PII-free defaults.
-* [x] Implement `src/vscode/hover.ts` rendering sanitized claim tables with `Signature: Not performed`.
-* [x] Implement 60-second periodic invalidation timer tied to `onDidChangeInlayHints`.
+### Sprint 2: VS Code Presentation & Workflow Layer (V1 / 0.1.0 Preview) — COMPLETE
+* [x] Implement `src/vscode/codeLens.ts` for top-of-line ambient badges with cancellation token checks.
+* [x] Implement `src/vscode/decorator.ts` for inline badges with visible-range viewport scanning.
+* [x] Implement `src/vscode/hover.ts` & `src/vscode/hoverFormatter.ts` rendering truthful signature presence semantics and collapsible claim inspection.
+* [x] Implement `src/vscode/commands.ts` & `src/vscode/commandHelpers.ts` for interactive Action Palette, cursor inspection, clipboard zero-leak mode, and `Copy Redacted Token`.
+* [x] Implement `src/vscode/filter.ts` with `jwtGlance.maxDocumentCharacters` and exclusion controls.
+* [x] Implement 60-second periodic invalidation timer for live relative countdown updates.
 * [x] Build adversarial corpus runner (12,000 test cases) verifying zero false positives.
-* [ ] Build `@vscode/test-electron` smoke test suite (8 integration scenarios).
-* [x] Package local `.vsix` (`jwt-glance-0.1.0.vsix`) and complete dual verification in VS Code and Cursor.
+* [x] Implement GitHub Actions CI (`.github/workflows/ci.yml`) on Node `20.x` and `22.x`, Dependabot configuration, and tag-based release workflow (`.github/workflows/release.yml`).
+* [x] Package verified local `.vsix` (`jwt-glance-0.1.0.vsix`) with audited minimal payload (75KB).
 
-### Sprint 3: Dogfooding & Production Launch (V1.1) — PENDING
-
-* [ ] Run personal 2-week dogfood trial on daily development machines.
-* [ ] Confirm low idle CPU load and imperceptible typing latency.
-* [ ] Publish V1 to Visual Studio Marketplace and Open VSX Registry.
+### Sprint 3: Dogfooding & 0.1.0 Preview Release (V1.1) — READY
+* [ ] Smoke test packaged `.vsix` on clean VS Code and Cursor installations.
+* [ ] Publish 0.1.0 Preview to Visual Studio Marketplace.
+* [ ] Run 2-week active dogfood cycle across daily projects to gather community feedback.
 
 ### Sprint 4: VS Code Language Model Tools (V2)
-
 * [ ] Bump engine dependency in `package.json` to `"vscode": "^1.95.0"`.
 * [ ] Define `jwtGlance_inspectCredentialAtLocation` contribution schema in manifest.
 * [ ] Implement tool handler using `vscode.lm.registerTool`, isolating raw tokens from agent context.
 * [ ] Write integration test verifying tool execution against mock workspace files.
 
 ### Sprint 5: Multi-Token Diagnostics & Workspace Auditing (V2.1 - V2.2)
-
 * [ ] Implement `jwtGlance_inspectCredentialsInFile` returning line-indexed metadata manifests.
 * [ ] Implement `jwtGlance_auditCredentialFiles` with hardcoded directory exclusions and strict globs.
 * [ ] Validate end-to-end agent workflow resolving mock 401 integration test failures.
 
 ### Sprint 6: Standalone MCP Server (V3)
-
 * [ ] Scaffold `packages/mcp-server` targeting Node.js execution.
 * [ ] Integrate `@modelcontextprotocol/sdk` over standard input/output (`stdio`).
 * [ ] Implement `jwt_inspect_at_path` and `jwt_audit_file` handlers.

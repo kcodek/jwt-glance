@@ -1,0 +1,260 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="1200" height="680">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="canvasBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070b14" />
+      <stop offset="50%" stop-color="#0d111b" />
+      <stop offset="100%" stop-color="#04060a" />
+    </linearGradient>
+    <linearGradient id="windowBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38445a" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#1e2638" stop-opacity="0.6" />
+    </linearGradient>
+    <linearGradient id="badgeActiveBg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0c2333" />
+      <stop offset="100%" stop-color="#11334c" />
+    </linearGradient>
+    <linearGradient id="badgeWarnBg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#331e08" />
+      <stop offset="100%" stop-color="#4a2c0c" />
+    </linearGradient>
+    <linearGradient id="badgeExpiredBg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#330e15" />
+      <stop offset="100%" stop-color="#4a151f" />
+    </linearGradient>
+    <linearGradient id="hoverCardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181e2b" />
+      <stop offset="100%" stop-color="#10141f" />
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="windowDropShadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="20" stdDeviation="28" flood-color="#000000" flood-opacity="0.8" />
+    </filter>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="16" stdDeviation="22" flood-color="#000000" flood-opacity="0.9" />
+    </filter>
+  </defs>
+
+  <style>
+    .font-code { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 13px; }
+    .font-ui { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .gutter-num { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; fill: #485263; text-anchor: end; }
+  </style>
+
+  <!-- Canvas Background -->
+  <rect width="1200" height="680" fill="url(#canvasBg)" />
+
+  <!-- Ambient Decorative Glow -->
+  <circle cx="600" cy="340" r="420" fill="#38bdf8" fill-opacity="0.035" />
+  <circle cx="850" cy="380" r="320" fill="#818cf8" fill-opacity="0.025" />
+
+  <!-- ================= MAIN VS CODE WINDOW ================= -->
+  <g transform="translate(48, 32)" filter="url(#windowDropShadow)">
+    <!-- Window Frame -->
+    <rect width="1104" height="616" rx="12" fill="#0f131a" stroke="url(#windowBorder)" stroke-width="1.5" />
+
+    <!-- Titlebar -->
+    <path d="M 0 12 C 0 5.373 5.373 0 12 0 L 1092 0 C 1098.627 0 1104 5.373 1104 12 L 1104 40 L 0 40 Z" fill="#151923" />
+    <line x1="0" y1="40" x2="1104" y2="40" stroke="#1f2533" stroke-width="1" />
+
+    <!-- macOS Window Buttons -->
+    <circle cx="20" cy="20" r="6" fill="#ff5f56" />
+    <circle cx="40" cy="20" r="6" fill="#ffbd2e" />
+    <circle cx="60" cy="20" r="6" fill="#27c93f" />
+
+    <!-- Tabs Container -->
+    <g transform="translate(86, 0)">
+      <!-- Tab 1: sample.env (Active) -->
+      <path d="M 0 6 C 0 2 2 0 6 0 L 140 0 C 144 0 146 2 146 6 L 146 40 L 0 40 Z" fill="#0f131a" />
+      <line x1="0" y1="0" x2="146" y2="0" stroke="#38bdf8" stroke-width="2" />
+      <circle cx="16" cy="20" r="3.5" fill="#38bdf8" />
+      <text x="28" y="24" fill="#e2e8f0" class="font-ui" font-size="12.5" font-weight="500">sample.env</text>
+      <circle cx="132" cy="20" r="3" fill="#64748b" />
+
+      <!-- Tab 2: sample.http -->
+      <text x="174" y="24" fill="#64748b" class="font-ui" font-size="12.5">sample.http</text>
+      <line x1="264" y1="12" x2="264" y2="28" stroke="#1f2533" />
+
+      <!-- Tab 3: auth.ts -->
+      <text x="284" y="24" fill="#64748b" class="font-ui" font-size="12.5">auth.ts</text>
+    </g>
+
+    <!-- Breadcrumb Bar -->
+    <g transform="translate(0, 40)">
+      <rect width="1104" height="26" fill="#0f131a" />
+      <line x1="0" y1="26" x2="1104" y2="26" stroke="#1f2533" stroke-width="1" />
+      <text x="22" y="17" fill="#64748b" class="font-ui" font-size="11.5">jwt-glance &gt; test &gt; fixtures &gt; <tspan fill="#cbd5e1">sample.env</tspan></text>
+    </g>
+
+    <!-- Editor Body Area -->
+    <g transform="translate(0, 66)">
+      <!-- Gutter Background -->
+      <rect width="48" height="550" fill="#0f131a" />
+      <line x1="48" y1="0" x2="48" y2="550" stroke="#1f2533" stroke-width="1" />
+
+      <!-- Gutter Line Numbers (Authentic: CodeLens is above line without its own gutter line) -->
+      <text x="36" y="32" class="gutter-num">1</text>
+      <text x="36" y="80" class="gutter-num" fill="#38bdf8" font-weight="700">2</text>
+      <text x="36" y="112" class="gutter-num">3</text>
+      <text x="36" y="144" class="gutter-num">4</text>
+      <text x="36" y="192" class="gutter-num">5</text>
+      <text x="36" y="224" class="gutter-num">6</text>
+      <text x="36" y="256" class="gutter-num">7</text>
+      <text x="36" y="304" class="gutter-num">8</text>
+      <text x="36" y="336" class="gutter-num">9</text>
+
+      <!-- ================= CODE CONTENT ================= -->
+
+      <!-- LINE 1: Comment -->
+      <text x="66" y="32" class="font-code" fill="#64748b"># Primary API Gateway Token (Active Session)</text>
+
+      <!-- LINE 2 CODELENS BADGE (Above Line 2) -->
+      <g transform="translate(66, 44)">
+        <rect width="258" height="20" rx="4" fill="url(#badgeActiveBg)" stroke="#0284c7" stroke-width="1" />
+        <!-- Key Icon -->
+        <path d="M 12 10 A 3 3 0 1 1 12 6 A 3 3 0 0 1 12 10 Z M 12 8 L 20 8 L 20 11 L 18 11 L 18 10 L 16 10 L 16 8 Z" fill="#38bdf8" transform="translate(0, 1)" />
+        <text x="24" y="14" class="font-code" font-size="11.5" font-weight="600" fill="#38bdf8">JWT</text>
+        <text x="54" y="14" class="font-code" font-size="11.5" fill="#475569">·</text>
+        <text x="64" y="14" class="font-code" font-size="11.5" font-weight="600" fill="#e2e8f0">user-42</text>
+        <text x="122" y="14" class="font-code" font-size="11.5" fill="#475569">·</text>
+        <text x="132" y="14" class="font-code" font-size="11.5" font-weight="600" fill="#34d399">Active 42m</text>
+      </g>
+
+      <!-- LINE 2 CODE: Token String with Colored Segments -->
+      <g transform="translate(66, 80)">
+        <text class="font-code">
+          <tspan fill="#7ee787">AUTH_TOKEN</tspan><tspan fill="#e2e8f0">=</tspan><tspan fill="#a5d6ff">"</tspan><tspan fill="#fb7185" font-weight="600">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</tspan><tspan fill="#94a3b8">.</tspan><tspan fill="#c084fc" font-weight="600">eyJzdWIiOiJ1c2VyLTQyIiwicm9sZXMiOlsiYWRtaW4iLCJkZXZlbG9wZXIiXSwiaXNzIjoiaHR0cHM6Ly9hdXRoLmV4YW1wbGUuY29tIiwiZXhwIjoxNzg5MDQ4ODAwLCJpYXQiOjE3ODkwNDYyODB9</tspan><tspan fill="#94a3b8">.</tspan><tspan fill="#38bdf8" font-weight="600">SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</tspan><tspan fill="#a5d6ff">"</tspan>
+        </text>
+      </g>
+
+      <!-- LINE 4: Comment -->
+      <text x="66" y="144" class="font-code" fill="#64748b"># Service Worker Draft Token (Unsigned 2-Segment)</text>
+
+      <!-- LINE 5 CODELENS BADGE (Above Line 5) -->
+      <g transform="translate(66, 156)">
+        <rect width="364" height="20" rx="4" fill="url(#badgeWarnBg)" stroke="#d97706" stroke-width="1" />
+        <path d="M 12 10 A 3 3 0 1 1 12 6 A 3 3 0 0 1 12 10 Z M 12 8 L 20 8 L 20 11 L 18 11 L 18 10 L 16 10 L 16 8 Z" fill="#fbbf24" transform="translate(0, 1)" />
+        <text x="24" y="14" class="font-code" font-size="11.5" font-weight="600" fill="#fbbf24">JWT</text>
+        <text x="54" y="14" class="font-code" font-size="11.5" fill="#78350f">·</text>
+        <text x="64" y="14" class="font-code" font-size="11.5" font-weight="700" fill="#f59e0b">RS256 NO SIG ⚠️</text>
+        <text x="184" y="14" class="font-code" font-size="11.5" fill="#78350f">·</text>
+        <text x="194" y="14" class="font-code" font-size="11.5" font-weight="600" fill="#e2e8f0">service-worker</text>
+        <text x="296" y="14" class="font-code" font-size="11.5" fill="#78350f">·</text>
+        <text x="306" y="14" class="font-code" font-size="11.5" font-weight="600" fill="#34d399">Active 2h</text>
+      </g>
+
+      <!-- LINE 5 CODE: 2-Segment Token -->
+      <g transform="translate(66, 192)">
+        <text class="font-code">
+          <tspan fill="#7ee787">SERVICE_KEY</tspan><tspan fill="#e2e8f0">=</tspan><tspan fill="#a5d6ff">"</tspan><tspan fill="#fb7185">eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9</tspan><tspan fill="#94a3b8">.</tspan><tspan fill="#c084fc">eyJzdWIiOiJzZXJ2aWNlLXdvcmtlciIsImV4cCI6MTc4OTA1MzQ4MH0</tspan><tspan fill="#a5d6ff">"</tspan>
+        </text>
+      </g>
+
+      <!-- LINE 7: Comment -->
+      <text x="66" y="256" class="font-code" fill="#64748b"># Stale Test Fixture (Expired Session)</text>
+
+      <!-- LINE 8 CODELENS BADGE (Above Line 8) -->
+      <g transform="translate(66, 268)">
+        <rect width="250" height="20" rx="4" fill="url(#badgeExpiredBg)" stroke="#e11d48" stroke-width="1" />
+        <path d="M 12 10 A 3 3 0 1 1 12 6 A 3 3 0 0 1 12 10 Z M 12 8 L 20 8 L 20 11 L 18 11 L 18 10 L 16 10 L 16 8 Z" fill="#fb7185" transform="translate(0, 1)" />
+        <text x="24" y="14" class="font-code" font-size="11.5" font-weight="600" fill="#fb7185">JWT</text>
+        <text x="54" y="14" class="font-code" font-size="11.5" fill="#475569">·</text>
+        <text x="64" y="14" class="font-code" font-size="11.5" font-weight="600" fill="#e2e8f0">dev-user</text>
+        <text x="126" y="14" class="font-code" font-size="11.5" fill="#475569">·</text>
+        <text x="136" y="14" class="font-code" font-size="11.5" font-weight="600" fill="#f43f5e">Expired 3h</text>
+      </g>
+
+      <!-- LINE 8 CODE: Expired Token -->
+      <g transform="translate(66, 304)">
+        <text class="font-code">
+          <tspan fill="#7ee787">DEV_TOKEN</tspan><tspan fill="#e2e8f0">=</tspan><tspan fill="#a5d6ff">"</tspan><tspan fill="#fb7185">eyJhbGciOiJIUzI1NiJ9</tspan><tspan fill="#94a3b8">.</tspan><tspan fill="#c084fc">eyJzdWIiOiJkZXYtdXNlciIsImV4cCI6MTc4OTAzNTQ4MH0</tspan><tspan fill="#94a3b8">.</tspan><tspan fill="#38bdf8">dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk</tspan><tspan fill="#a5d6ff">"</tspan>
+        </text>
+      </g>
+
+      <!-- ================= RICH HOVER INSPECTION CARD (OVERLAY) ================= -->
+      <g transform="translate(220, 92)" filter="url(#cardShadow)">
+        <!-- Card Frame -->
+        <rect width="660" height="346" rx="10" fill="url(#hoverCardBg)" stroke="#388bfd" stroke-width="1.5" />
+
+        <!-- Title & Freshness -->
+        <g transform="translate(22, 24)">
+          <text class="font-ui" font-size="15" font-weight="700" fill="#f8fafc">
+            JWT Glance · <tspan fill="#34d399">ACTIVE</tspan> <tspan font-weight="500" font-size="13" fill="#94a3b8">(expires in 42m)</tspan>
+          </text>
+        </g>
+
+        <!-- Algorithm & Signature Status -->
+        <g transform="translate(22, 52)">
+          <text class="font-ui" font-size="12.5" fill="#cbd5e1">
+            <tspan font-weight="600">Algorithm:</tspan> <tspan class="font-code" fill="#38bdf8">HS256</tspan>
+            <tspan fill="#475569"> &nbsp;|&nbsp; </tspan>
+            <tspan fill="#34d399">ℹ️</tspan> <tspan font-weight="600">Signature:</tspan> <tspan fill="#94a3b8">Present, not verified</tspan> <tspan fill="#64748b" font-style="italic">(Local inspection only)</tspan>
+          </text>
+        </g>
+
+        <line x1="22" y1="68" x2="638" y2="68" stroke="#2a3447" />
+
+        <!-- Vitals Row 1 -->
+        <g transform="translate(22, 90)">
+          <text class="font-ui" font-size="12.5" fill="#cbd5e1">
+            <tspan font-weight="600">Expires:</tspan> <tspan class="font-code" fill="#f1f5f9">2026-09-10T14:00:00.000Z</tspan>
+          </text>
+          <text x="320" y="0" class="font-ui" font-size="12.5" fill="#cbd5e1">
+            <tspan font-weight="600">Subject:</tspan> <tspan class="font-code" fill="#38bdf8">user-42</tspan>
+          </text>
+        </g>
+
+        <!-- Vitals Row 2 -->
+        <g transform="translate(22, 114)">
+          <text class="font-ui" font-size="12.5" fill="#cbd5e1">
+            <tspan font-weight="600">Issuer:</tspan> <tspan class="font-code" fill="#cbd5e1">https://auth.example.com</tspan>
+          </text>
+          <text x="320" y="0" class="font-ui" font-size="12.5" fill="#cbd5e1">
+            <tspan font-weight="600">Roles:</tspan> <tspan class="font-code" fill="#c084fc">admin, developer</tspan>
+          </text>
+        </g>
+
+        <!-- Claims Table Box -->
+        <g transform="translate(22, 138)">
+          <rect width="616" height="116" rx="6" fill="#0b0f17" stroke="#1e2638" />
+          
+          <!-- Table Header -->
+          <rect width="616" height="26" rx="6" fill="#141a26" />
+          <text x="14" y="17" class="font-ui" font-size="11" font-weight="700" fill="#94a3b8">CLAIM</text>
+          <text x="160" y="17" class="font-ui" font-size="11" font-weight="700" fill="#94a3b8">VALUE</text>
+          <line x1="0" y1="26" x2="616" y2="26" stroke="#1e2638" />
+
+          <!-- Row 1: sub -->
+          <text x="14" y="44" class="font-code" font-size="11.5" fill="#38bdf8">sub</text>
+          <text x="160" y="44" class="font-code" font-size="11.5" fill="#f1f5f9">user-42</text>
+          <line x1="14" y1="52" x2="602" y2="52" stroke="#1e2638" stroke-dasharray="3 3" />
+
+          <!-- Row 2: roles -->
+          <text x="14" y="70" class="font-code" font-size="11.5" fill="#38bdf8">roles</text>
+          <text x="160" y="70" class="font-code" font-size="11.5" fill="#c084fc">admin, developer</text>
+          <line x1="14" y1="78" x2="602" y2="78" stroke="#1e2638" stroke-dasharray="3 3" />
+
+          <!-- Row 3: iss -->
+          <text x="14" y="96" class="font-code" font-size="11.5" fill="#38bdf8">iss</text>
+          <text x="160" y="96" class="font-code" font-size="11.5" fill="#f1f5f9">https://auth.example.com</text>
+        </g>
+
+        <!-- Collapsible Toggle -->
+        <g transform="translate(22, 276)">
+          <text class="font-ui" font-size="12" font-weight="600" fill="#60a5fa">
+            ▶ 🔍 View Complete Details &amp; Decoded Payload
+          </text>
+        </g>
+
+        <!-- Cryptographic Notice Footer -->
+        <g transform="translate(22, 308)">
+          <rect width="616" height="24" rx="4" fill="#141a26" />
+          <text x="10" y="16" class="font-ui" font-size="11" fill="#94a3b8">
+            🔒 <tspan fill="#e2e8f0" font-weight="600">Note:</tspan> JWT Glance provides ambient structural inspection only. Decoding does not establish cryptographic authenticity.
+          </text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

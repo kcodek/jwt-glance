@@ -1,7 +1,9 @@
 .vscode/**
 .vscode-test/**
 .github/**
+.agents/**
 src/**
+
 test/**
 scripts/**
 out/**
@@ -12,6 +14,8 @@ spec.md
 .git/**
 **/*.map
 .env*
-images/preview.png
+images/preview.*
+images/*.svg
 CONTRIBUTING.md
+
 

@@ -2,7 +2,11 @@
 
 > **Zero-click ambient JWT inspection lens for VS Code & Cursor.**
 
+![JWT Glance Ambient Lens Preview](images/preview.png)
+
+
 JWT Glance automatically surfaces JWT expiration countdowns, algorithm information, and sanitized claim cards directly within your editor—eliminating the insecure reflex of pasting sensitive credentials into third-party web decoders (`jwt.io`) and preventing cryptic `401 Unauthorized` test failures caused by stale fixtures.
+
 
 ---
 
