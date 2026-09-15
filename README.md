@@ -20,7 +20,7 @@ JWT Glance automatically surfaces JWT expiration countdowns, algorithm informati
   - **Copy Actions:** Copy full decoded payload JSON or raw token string.
   - **Single-Click Claim Copying:** Copy individual claims directly (`Subject`, `Roles`, `Issuer`, `Audience`, `Expiration`) to clipboard with confirmation.
 - ⌨️ **Command Palette & Zero-Leak Clipboard Inspection (`Cmd+Shift+P`):** Inspect tokens at cursor, copy redacted tokens, safely decode tokens straight from the clipboard in memory (without writing the token to project files or extension-managed storage), or toggle ambient badges with one keystroke.
-- 🔍 **Rich Sanitized Hover Card:** Hover over any token to inspect decoded headers, clean claim tables (`iss`, `sub`, `aud`, `roles`), and formatted payload JSON with explicit signature presence (`Signature: Present, not verified`, `Signature: Absent`, `Signature: Empty`, or `Signature: Unexpected`).
+- 🔍 **Rich Hover Card:** Hover over any token to inspect decoded headers, clean claim tables (`iss`, `sub`, `aud`, `roles`), and formatted payload JSON with explicit signature presence (`Signature: Present, not verified`, `Signature: Absent`, `Signature: Empty`, or `Signature: Unexpected`).
 
 - 🛡️ **Credential Isolation:** Pure local execution. Raw secret strings are never logged, never transmitted over sockets, and never leaked to external networks.
 - ⏱️ **60-Second Live Timer:** Relative expiration countdowns (`Active 42m` → `Active 41m`) refresh automatically without requiring file edits or typing.
@@ -166,7 +166,7 @@ npm run inspect
 
 **Terminal Output Preview:**
 ```text
---- Inlay Hint Badge Preview ---
+--- Ambient Badge Preview ---
 [JWT · user-42 · Active 42m]
 
 --- Decoded Assessment Object ---
@@ -174,6 +174,8 @@ npm run inspect
   recognized: true,
   algorithm: 'HS256',
   isUnsecured: false,
+  segmentCount: 3,
+  signature: { presence: 'PRESENT', verification: 'NOT_PERFORMED' },
   temporalStatus: 'ACTIVE',
   expiresAtIso: '2026-09-10T14:00:00.000Z',
   secondsUntilExpiration: 2520,
@@ -183,13 +185,12 @@ npm run inspect
   audience: null,
   subject: 'user-42',
   roles: [ 'admin', 'developer' ],
-  warnings: [],
-  verification: { status: 'NOT_PERFORMED' }
+  warnings: []
 }
 
 --- Hover Card Markdown Preview ---
 ### JWT Glance · `ACTIVE` (expires in 42m)
-**Algorithm:** `HS256` &nbsp;|&nbsp; > ℹ️ **Signature: Not performed** *(Local inspection only)*
+**Algorithm:** `HS256` &nbsp;|&nbsp; > ℹ️ **Signature: Present, not verified** *(Local inspection only)*
 
 **Expires:** `2026-09-10T14:00:00.000Z` &nbsp;•&nbsp; **Subject:** `user-42` &nbsp;•&nbsp; **Issuer:** https://auth.example.com &nbsp;•&nbsp; **Roles:** `admin, developer`
 ```
@@ -239,7 +240,7 @@ Customize JWT Glance behavior in your VS Code `settings.json`:
 | `jwtGlance.enabled` | `boolean` | `true` | Enable or disable ambient glance badges and hover cards. |
 | `jwtGlance.position` | `'top' \| 'left'` | `'top'` | Badge position: `'top'` renders above the line (CodeLens), `'left'` renders inline decoration before the token. |
 | `jwtGlance.maxLineLength` | `number` | `10000` | Maximum character length of a line to scan (prevents lag on minified files). |
-| `jwtGlance.maxDocumentCharacters` | `number` | `524288` | Maximum document character count to scan (default 512,000 characters). Documents exceeding this are skipped to protect editor responsiveness. |
+| `jwtGlance.maxDocumentCharacters` | `number` | `524288` | Maximum document character count to scan (default 524,288 characters, ~512 KB). Documents exceeding this are skipped to protect editor responsiveness. |
 | `jwtGlance.exclude` | `string[]` | `["**/package-lock.json", ...]` | Glob patterns of files to exclude from ambient scanning. |
 | `jwtGlance.languages` | `string[]` | `["*"]` | Language identifiers to scan (default `["*"]` for all languages). |
 
@@ -288,8 +289,8 @@ npm run package
 ## 🏗️ Architecture Invariants
 
 - **Hexagonal Separation:** Pure TypeScript evaluation logic in `src/core/` contains **zero** dependencies and **zero** imports from `vscode` or Node filesystem modules.
-- **Strict Trust Semantics:** Unverified tokens are labeled `Signature: Not performed` to prevent false senses of cryptographic security.
-- **High-Signal Ambient Badges:** Inlay badges prioritize credential identity (`sub`) and temporal freshness (`Active` / `Expired`), keeping full claim payloads safely tucked into the hover card and interactive action palette.
+- **Strict Trust Semantics:** Unverified tokens are labeled `Signature: Present, not verified` (or `Absent` / `Empty` / `Unexpected`) to prevent false senses of cryptographic security.
+- **High-Signal Ambient Badges:** Badges prioritize credential identity (`sub`) and temporal freshness (`Active` / `Expired`), keeping full claim payloads safely accessible via the hover card and interactive action palette.
 
 ---
 

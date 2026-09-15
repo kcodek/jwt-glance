@@ -23,7 +23,7 @@ function runInspection(rawToken) {
     process.exit(1);
   }
 
-  console.log('\n--- Inlay Hint Badge Preview ---');
+  console.log('\n--- Ambient Badge Preview ---');
   console.log(`[${badge.formatBadgeLabel(assessment)}]`);
 
   console.log('\n--- Decoded Assessment Object ---');

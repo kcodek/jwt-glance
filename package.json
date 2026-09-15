@@ -82,7 +82,7 @@
         "jwtGlance.maxDocumentCharacters": {
           "type": "number",
           "default": 524288,
-          "description": "Maximum document character length to scan (default 512,000 characters). Documents exceeding this limit are skipped to maintain editor responsiveness."
+          "description": "Maximum document character count to scan (default 524,288 characters, ~512 KB). Documents exceeding this limit are skipped to maintain editor responsiveness."
         },
         "jwtGlance.exclude": {
           "type": "array",

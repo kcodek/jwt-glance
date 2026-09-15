@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { assessToken, parseJwt, createSanitizedJwt } from '../core/index';
+import { assessToken, parseJwt, createRedactedJwt } from '../core/index';
 import { formatBadgeLabel } from './badgeFormatter';
 import {
   extractClaimSummaries,
@@ -67,7 +67,7 @@ export async function showJwtActionPalette(
       description: 'Diagnostic token with unverified claims redacted. Intentionally invalid for authentication.',
       buttons: [copyButton],
       action: async () => {
-        const redaction = createSanitizedJwt(rawToken);
+        const redaction = createRedactedJwt(rawToken);
         if (redaction.success) {
           await vscode.env.clipboard.writeText(redaction.token);
           vscode.window.showInformationMessage('JWT Glance: Redacted diagnostic token copied to clipboard.');
@@ -255,7 +255,7 @@ export async function copyRedactedToken(): Promise<void> {
     return;
   }
 
-  const redaction = createSanitizedJwt(candidate);
+  const redaction = createRedactedJwt(candidate);
   if (redaction.success) {
     await vscode.env.clipboard.writeText(redaction.token);
     vscode.window.showInformationMessage('JWT Glance: Redacted diagnostic token copied to clipboard.');
