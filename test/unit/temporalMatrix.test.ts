@@ -4,9 +4,9 @@ import { evaluateTemporal } from '../../src/core/temporal';
 
 const NOW = 1700000000;
 
-test('Exact boundary: now === exp returns ACTIVE with secondsUntilExpiration = 0', () => {
+test('Exact boundary: now === exp returns EXPIRED with secondsUntilExpiration = 0', () => {
   const result = evaluateTemporal({ exp: NOW }, NOW);
-  assert.equal(result.temporalStatus, 'ACTIVE');
+  assert.equal(result.temporalStatus, 'EXPIRED');
   assert.equal(result.secondsUntilExpiration, 0);
 });
 

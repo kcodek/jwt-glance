@@ -1,4 +1,4 @@
-import type { TokenAssessment, RecognizedToken, TemporalWarning } from './types';
+import type { TokenAssessment, RecognizedToken, SignaturePresence, TokenWarning } from './types';
 import { parseJwt } from './parse';
 import { evaluateTemporal } from './temporal';
 
@@ -47,9 +47,34 @@ export function assessToken(
 
   const { header, payload } = parsed;
   const algorithm = typeof header['alg'] === 'string' ? header['alg'] : 'unknown';
-  const isUnsecured = algorithm.toLowerCase() === 'none';
+  const isAlgNone = algorithm.toLowerCase() === 'none';
+  const isUnsecured = isAlgNone;
 
   const temporal = evaluateTemporal(payload, referenceEpochSeconds);
+  const warnings: TokenWarning[] = [...temporal.warnings];
+
+  let signaturePresence: SignaturePresence;
+  if (parsed.segmentCount === 2) {
+    signaturePresence = 'MISSING';
+    warnings.push('TWO_SEGMENT_INSPECTION');
+    if (!isAlgNone) {
+      warnings.push('SIGNATURE_MISSING');
+    }
+  } else if (!parsed.hasSignature) {
+    signaturePresence = 'MISSING';
+    if (isAlgNone) {
+      warnings.push('UNSECURED_ALG_NONE');
+    } else {
+      warnings.push('SIGNATURE_MISSING');
+    }
+  } else {
+    if (isAlgNone) {
+      signaturePresence = 'UNEXPECTED';
+      warnings.push('UNEXPECTED_SIGNATURE');
+    } else {
+      signaturePresence = 'PRESENT';
+    }
+  }
 
   let issuer: string | null = null;
   if (typeof payload['iss'] === 'string') {
@@ -74,6 +99,11 @@ export function assessToken(
     recognized: true,
     algorithm,
     isUnsecured,
+    segmentCount: parsed.segmentCount,
+    signature: {
+      presence: signaturePresence,
+      verification: 'NOT_PERFORMED'
+    },
     temporalStatus: temporal.temporalStatus,
     expiresAtIso: temporal.expiresAtIso,
     secondsUntilExpiration: temporal.secondsUntilExpiration,
@@ -83,7 +113,7 @@ export function assessToken(
     audience,
     subject,
     roles,
-    warnings: temporal.warnings as TemporalWarning[],
+    warnings,
     verification: {
       status: 'NOT_PERFORMED'
     }

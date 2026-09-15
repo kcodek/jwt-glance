@@ -6,7 +6,8 @@ import {
   handleInspectTokenCommand,
   inspectAtCursor,
   inspectFromClipboard,
-  toggleAmbientLens
+  toggleAmbientLens,
+  copySanitizedToken
 } from './commands';
 
 const DOCUMENT_SELECTOR: vscode.DocumentSelector = [
@@ -51,6 +52,11 @@ export function activate(context: vscode.ExtensionContext): void {
     inspectFromClipboard
   );
 
+  const copySanitizedTokenCmd = vscode.commands.registerCommand(
+    'jwtGlance.copySanitizedToken',
+    copySanitizedToken
+  );
+
   const toggleEnabledCmd = vscode.commands.registerCommand(
     'jwtGlance.toggleEnabled',
     toggleAmbientLens
@@ -58,6 +64,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const showHoverCmd = vscode.commands.registerCommand('jwtGlance.showHover', (...args: unknown[]) => {
     vscode.commands.executeCommand('jwtGlance.inspectToken', ...args);
+  });
+
+  // Update decorations when editor visible ranges change (scrolling)
+  const visibleRangesDisposable = vscode.window.onDidChangeTextEditorVisibleRanges((event) => {
+    decorator.updateDecorations(event.textEditor);
   });
 
   // Update decorations when active editor changes
@@ -116,8 +127,10 @@ export function activate(context: vscode.ExtensionContext): void {
     inspectTokenCmd,
     inspectAtCursorCmd,
     inspectFromClipboardCmd,
+    copySanitizedTokenCmd,
     toggleEnabledCmd,
     showHoverCmd,
+    visibleRangesDisposable,
     activeEditorDisposable,
     docChangeDisposable,
     visibleEditorsDisposable,

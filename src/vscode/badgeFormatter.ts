@@ -47,6 +47,8 @@ export function formatBadgeLabel(token: RecognizedToken): string {
 
   if (token.isUnsecured) {
     parts.push('UNSECURED alg:none');
+  } else if (token.signature?.presence === 'MISSING') {
+    parts.push(`${token.algorithm} NO SIG ⚠️`);
   }
 
   if (token.subject && token.subject.trim().length > 0) {

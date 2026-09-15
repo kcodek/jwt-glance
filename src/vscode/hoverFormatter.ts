@@ -17,7 +17,17 @@ export function formatHoverContent(
 
   // --- BRIEF GLANCE SUMMARY (Top Level) ---
   lines.push(`### JWT Glance · \`${token.temporalStatus}\` ${relativeTimeStr}`);
-  lines.push(`**Algorithm:** \`${token.algorithm}\`${unsecuredBadge} &nbsp;|&nbsp; > ℹ️ **Signature: Not performed** *(Local inspection only)*`);
+
+  let sigText = 'ℹ️ **Signature: Not performed** *(Local inspection only)*';
+  if (token.signature?.presence === 'MISSING') {
+    sigText = '⚠️ **Signature: Missing** *(No signature segment found)*';
+  } else if (token.signature?.presence === 'UNEXPECTED') {
+    sigText = '⚠️ **Signature: Unexpected** *(alg:none with signature)*';
+  } else if (token.signature?.presence === 'PRESENT') {
+    sigText = 'ℹ️ **Signature: Present, not verified** *(Local inspection only)*';
+  }
+
+  lines.push(`**Algorithm:** \`${token.algorithm}\`${unsecuredBadge} &nbsp;|&nbsp; ${sigText}`);
   lines.push('');
 
   const vitals: string[] = [];
@@ -75,6 +85,8 @@ export function formatHoverContent(
   }
 
   lines.push('</details>');
+  lines.push('');
+  lines.push('> 🔒 *Note: JWT Glance provides ambient structural inspection only. Decoding does not establish cryptographic authenticity.*');
 
   return lines.join('\n');
 }

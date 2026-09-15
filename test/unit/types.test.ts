@@ -7,6 +7,11 @@ test('TokenAssessment discriminated union narrows correctly', () => {
     recognized: true,
     algorithm: 'HS256',
     isUnsecured: false,
+    segmentCount: 3,
+    signature: {
+      presence: 'PRESENT',
+      verification: 'NOT_PERFORMED'
+    },
     temporalStatus: 'ACTIVE',
     expiresAtIso: '2026-09-10T12:00:00.000Z',
     secondsUntilExpiration: 3600,

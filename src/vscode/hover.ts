@@ -24,7 +24,7 @@ export class JwtHoverProvider implements vscode.HoverProvider {
     const char = position.character;
 
     for (const candidate of candidates) {
-      if (char >= candidate.startIndex && char <= candidate.endIndex) {
+      if (char >= candidate.startIndex && char < candidate.endIndex) {
         const nowEpoch = Math.floor(Date.now() / 1000);
         const assessment = assessToken(candidate.raw, nowEpoch);
         if (!assessment.recognized) {

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { findCandidateTokens, assessToken } from '../core/index';
 import { formatBadgeLabel } from './badgeFormatter';
+import { isDocumentEligible } from './filter';
 
 export class JwtCodeLensProvider implements vscode.CodeLensProvider {
   private readonly _onDidChangeCodeLenses = new vscode.EventEmitter<void>();
@@ -15,10 +16,9 @@ export class JwtCodeLensProvider implements vscode.CodeLensProvider {
     _token: vscode.CancellationToken
   ): vscode.CodeLens[] {
     const config = vscode.workspace.getConfiguration('jwtGlance');
-    const isEnabled = config.get<boolean>('enabled', true);
     const position = config.get<string>('position', 'top');
 
-    if (!isEnabled || position !== 'top') {
+    if (position !== 'top' || !isDocumentEligible(document)) {
       return [];
     }
 
@@ -28,6 +28,10 @@ export class JwtCodeLensProvider implements vscode.CodeLensProvider {
 
     const lineCount = document.lineCount;
     for (let lineNum = 0; lineNum < lineCount; lineNum++) {
+      if (_token.isCancellationRequested) {
+        return [];
+      }
+
       const line = document.lineAt(lineNum);
       if (line.text.length > maxLineLength) {
         continue;

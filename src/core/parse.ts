@@ -4,6 +4,8 @@ export interface ParsedJwtSuccess {
   header: Record<string, unknown>;
   payload: Record<string, unknown>;
   signature: string;
+  segmentCount: 2 | 3;
+  hasSignature: boolean;
 }
 
 export type ParseJwtResult = ParsedJwtSuccess | UnrecognizedToken;
@@ -54,9 +56,14 @@ export function parseJwt(token: string): ParseJwtResult {
     };
   }
 
+  const segmentCount = parts.length as 2 | 3;
+  const hasSignature = segmentCount === 3 && typeof signature === 'string' && signature.length > 0;
+
   return {
     header,
     payload,
-    signature: signature ?? ''
+    signature: signature ?? '',
+    segmentCount,
+    hasSignature
   };
 }

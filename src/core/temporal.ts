@@ -84,7 +84,7 @@ export function evaluateTemporal(
     }
   } else if (exp !== null) {
     secondsUntilExpiration = exp - referenceEpochSeconds;
-    if (secondsUntilExpiration < 0) {
+    if (secondsUntilExpiration <= 0) {
       temporalStatus = 'EXPIRED';
     } else {
       temporalStatus = 'ACTIVE';

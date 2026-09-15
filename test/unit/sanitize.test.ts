@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import * as assert from 'node:assert/strict';
-import { sanitizeMarkdown } from '../../src/core/sanitize';
+import { sanitizeMarkdown, createSanitizedJwt } from '../../src/core/sanitize';
+import { parseJwt } from '../../src/core/parse';
 
 test('sanitizeMarkdown escapes markdown formatting characters', () => {
   const untrusted = 'admin | *bold* _italic_ `code` [link](http://evil.com) <script>';
@@ -16,4 +17,21 @@ test('sanitizeMarkdown handles non-string values safely', () => {
   assert.equal(sanitizeMarkdown(123 as unknown as string), '123');
   assert.equal(sanitizeMarkdown(null as unknown as string), '');
   assert.equal(sanitizeMarkdown(undefined as unknown as string), '');
+});
+
+test('createSanitizedJwt redacts sensitive claims while preserving structure and temporal claims', () => {
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsImVtYWlsIjoiam9obkBkb2UuY29tIiwicm9sZXMiOlsic3VwZXJhZG1pbiJdLCJleHAiOjE5MDAwMDAwMDB9.dGVzdHNpZw';
+  const sanitized = createSanitizedJwt(token);
+
+  assert.notEqual(sanitized, token);
+  const parsed = parseJwt(sanitized);
+  assert.equal('reason' in parsed, false);
+  if (!('reason' in parsed)) {
+    assert.equal(parsed.header['alg'], 'HS256');
+    assert.equal(parsed.payload['sub'], 'sanitized-subject');
+    assert.equal(parsed.payload['email'], '[REDACTED]');
+    assert.deepEqual(parsed.payload['roles'], ['[REDACTED]']);
+    assert.equal(parsed.payload['exp'], 1900000000);
+    assert.ok(parsed.hasSignature);
+  }
 });

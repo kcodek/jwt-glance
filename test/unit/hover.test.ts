@@ -8,6 +8,8 @@ test('formatHoverContent includes algorithm, signature notice, and sanitized cla
     recognized: true,
     algorithm: 'HS256',
     isUnsecured: false,
+    segmentCount: 3,
+    signature: { presence: 'PRESENT', verification: 'NOT_PERFORMED' },
     temporalStatus: 'ACTIVE',
     expiresAtIso: '2026-09-10T14:00:00.000Z',
     secondsUntilExpiration: 2520,
@@ -25,7 +27,7 @@ test('formatHoverContent includes algorithm, signature notice, and sanitized cla
 
   assert.ok(md.includes('### JWT Glance'));
   assert.ok(md.includes('HS256'));
-  assert.ok(md.includes('Signature: Not performed'));
+  assert.ok(md.includes('Signature: Present, not verified'));
   assert.ok(md.includes('ACTIVE'));
   assert.ok(md.includes('https://auth.example.com'));
   assert.ok(md.includes('user\\|123')); // Sanitized pipe
@@ -37,6 +39,8 @@ test('formatHoverContent flags unsecured alg:none prominently', () => {
     recognized: true,
     algorithm: 'none',
     isUnsecured: true,
+    segmentCount: 3,
+    signature: { presence: 'MISSING', verification: 'NOT_PERFORMED' },
     temporalStatus: 'ACTIVE',
     expiresAtIso: null,
     secondsUntilExpiration: null,
@@ -46,7 +50,7 @@ test('formatHoverContent flags unsecured alg:none prominently', () => {
     audience: null,
     subject: null,
     roles: [],
-    warnings: [],
+    warnings: ['UNSECURED_ALG_NONE'],
     verification: { status: 'NOT_PERFORMED' }
   };
 

@@ -42,12 +42,23 @@ test('assessToken correctly identifies roles from roles claim', () => {
 
 test('assessToken returns RecognizedToken for valid 2-segment token', () => {
   const twoPart = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiZXhwIjoxNTE2MjM5MDIyfQ';
+  // At reference time NOW (1516239022 === exp), token is expired per RFC 7519
   const result = assessToken(twoPart, NOW);
   assert.equal(result.recognized, true);
   if (result.recognized) {
     assert.equal(result.algorithm, 'RS256');
     assert.equal(result.subject, '1234567890');
-    assert.equal(result.temporalStatus, 'ACTIVE');
+    assert.equal(result.temporalStatus, 'EXPIRED');
+    assert.equal(result.segmentCount, 2);
+    assert.equal(result.signature.presence, 'MISSING');
+    assert.ok(result.warnings.includes('TWO_SEGMENT_INSPECTION'));
+    assert.ok(result.warnings.includes('SIGNATURE_MISSING'));
+  }
+
+  // Before expiration, token is active
+  const activeResult = assessToken(twoPart, NOW - 3600);
+  if (activeResult.recognized) {
+    assert.equal(activeResult.temporalStatus, 'ACTIVE');
   }
 });
 

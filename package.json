@@ -3,20 +3,36 @@
   "displayName": "JWT Glance",
   "description": "Zero-click ambient JWT inspection lens for VS Code",
   "version": "0.1.0",
-  "publisher": "jwt-glance",
+  "publisher": "kcodek",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jwt-glance/jwt-glance.git"
+    "url": "https://github.com/kcodek/jwt-glance.git"
   },
+  "homepage": "https://github.com/kcodek/jwt-glance#readme",
+  "bugs": {
+    "url": "https://github.com/kcodek/jwt-glance/issues"
+  },
+  "icon": "images/icon.png",
+  "keywords": [
+    "jwt",
+    "json web token",
+    "authentication",
+    "oauth",
+    "oidc",
+    "token decoder",
+    "security",
+    "keycloak"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "preview": true,
+  "pricing": "Free",
   "engines": {
     "vscode": "^1.85.0",
     "node": ">=18.0.0"
   },
-  "categories": [
-    "Other",
-    "Programming Languages"
-  ],
   "main": "./dist/extension.js",
   "activationEvents": [
     "onStartupFinished"
@@ -30,6 +46,10 @@
       {
         "command": "jwtGlance.inspectFromClipboard",
         "title": "JWT Glance: Inspect Token from Clipboard"
+      },
+      {
+        "command": "jwtGlance.copySanitizedToken",
+        "title": "JWT Glance: Copy Sanitized Token"
       },
       {
         "command": "jwtGlance.toggleEnabled",
@@ -58,6 +78,32 @@
           "type": "number",
           "default": 10000,
           "description": "Maximum line length to scan for candidate JWTs."
+        },
+        "jwtGlance.maxDocumentBytes": {
+          "type": "number",
+          "default": 524288,
+          "description": "Maximum document size in bytes to scan (default 512KB). Documents exceeding this limit are skipped to maintain editor responsiveness."
+        },
+        "jwtGlance.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/package-lock.json",
+            "**/pnpm-lock.yaml",
+            "**/*.min.*",
+            "**/*.map"
+          ],
+          "description": "Glob patterns of files and directories to exclude from ambient scanning."
+        },
+        "jwtGlance.languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["*"],
+          "description": "List of language identifiers to scan for JWTs (use ['*'] for all languages)."
         }
       }
     }

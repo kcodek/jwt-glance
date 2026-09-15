@@ -18,6 +18,8 @@ test('formatBadgeLabel formats active token with subject', () => {
     recognized: true,
     algorithm: 'HS256',
     isUnsecured: false,
+    segmentCount: 3,
+    signature: { presence: 'PRESENT', verification: 'NOT_PERFORMED' },
     temporalStatus: 'ACTIVE',
     expiresAtIso: '2026-09-10T14:00:00.000Z',
     secondsUntilExpiration: 2520, // 42m
@@ -42,6 +44,8 @@ test('formatBadgeLabel formats token without subject when subject is null', () =
     recognized: true,
     algorithm: 'HS256',
     isUnsecured: false,
+    segmentCount: 3,
+    signature: { presence: 'PRESENT', verification: 'NOT_PERFORMED' },
     temporalStatus: 'ACTIVE',
     expiresAtIso: '2026-09-10T14:00:00.000Z',
     secondsUntilExpiration: 2520, // 42m
@@ -64,6 +68,8 @@ test('formatBadgeLabel formats expired token', () => {
     recognized: true,
     algorithm: 'RS256',
     isUnsecured: false,
+    segmentCount: 3,
+    signature: { presence: 'PRESENT', verification: 'NOT_PERFORMED' },
     temporalStatus: 'EXPIRED',
     expiresAtIso: '2026-09-10T11:00:00.000Z',
     secondsUntilExpiration: -480, // 8m ago
@@ -86,6 +92,8 @@ test('formatBadgeLabel formats alg:none unsecured token with prominent warning',
     recognized: true,
     algorithm: 'none',
     isUnsecured: true,
+    segmentCount: 3,
+    signature: { presence: 'MISSING', verification: 'NOT_PERFORMED' },
     temporalStatus: 'ACTIVE',
     expiresAtIso: '2026-09-10T14:00:00.000Z',
     secondsUntilExpiration: 2520,
@@ -95,10 +103,34 @@ test('formatBadgeLabel formats alg:none unsecured token with prominent warning',
     audience: null,
     subject: 'local-dev-user',
     roles: [],
-    warnings: [],
+    warnings: ['UNSECURED_ALG_NONE'],
     verification: { status: 'NOT_PERFORMED' }
   };
 
   const label = formatBadgeLabel(token);
   assert.equal(label, 'JWT · UNSECURED alg:none · local-dev-user · Active 42m');
+});
+
+test('formatBadgeLabel formats signed token with missing signature with prominent warning', () => {
+  const token: RecognizedToken = {
+    recognized: true,
+    algorithm: 'RS256',
+    isUnsecured: false,
+    segmentCount: 2,
+    signature: { presence: 'MISSING', verification: 'NOT_PERFORMED' },
+    temporalStatus: 'ACTIVE',
+    expiresAtIso: '2026-09-10T14:00:00.000Z',
+    secondsUntilExpiration: 2520,
+    issuedAtIso: null,
+    notBeforeIso: null,
+    issuer: null,
+    audience: null,
+    subject: 'service-account',
+    roles: [],
+    warnings: ['SIGNATURE_MISSING', 'TWO_SEGMENT_INSPECTION'],
+    verification: { status: 'NOT_PERFORMED' }
+  };
+
+  const label = formatBadgeLabel(token);
+  assert.equal(label, 'JWT · RS256 NO SIG ⚠️ · service-account · Active 42m');
 });

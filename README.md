@@ -8,17 +8,25 @@ JWT Glance automatically surfaces JWT expiration countdowns, algorithm informati
 
 ## ✨ Features
 
-- ⚡ **Zero-Click Inlay Hints & CodeLens:** Inline badges appear immediately before or above detected tokens in `.env`, `.http`, `.rest`, `.json`, `.yml`, and source files (e.g. `[JWT · user-42 · Active 42m]`, `[JWT · kf1sadmin@... · Expired 2d]`, or `[JWT · UNSECURED alg:none · local-dev-user · Active 42m]`).
-- 🧩 **2- and 3-Segment Format Support:** Accurately recognizes both standard signed 3-segment tokens (`header.payload.signature`) and signature-omitted 2-segment tokens (`header.payload`) commonly used in `.env`, logs, and development mocks.
+- ⚡ **Zero-Click Ambient Badges & CodeLens:** Badges appear immediately above the line (`position: top`) or inline before detected tokens (`position: left`) in `.env`, `.http`, `.rest`, `.json`, `.yml`, and source files (e.g. `[JWT · user-42 · Active 42m]`, `[JWT · RS256 NO SIG ⚠️ · service · Active 2h]`, or `[JWT · UNSECURED alg:none · local-dev-user · Active 42m]`).
+- 🧩 **Standard 3-Segment & Two-Segment Inspection:** Accurately inspects standard signed 3-segment tokens (`header.payload.signature`), flags missing signatures on signed algorithms, and supports two-segment JWT-like inspection (`header.payload`) commonly found in `.env` drafts and mocks.
 - 🎯 **Interactive Action Palette:** Click any badge to open a categorized quick menu:
   - **Open Decoded Token in New Editor:** Opens a dedicated, formatted JSON editor tab with syntax highlighting, searchability, and folding.
+  - **Copy Sanitized Token:** Exports a structurally valid token with sensitive claims redacted for safe inclusion in bug reports and tickets.
   - **Copy Actions:** Copy full decoded payload JSON or raw token string.
   - **Single-Click Claim Copying:** Copy individual claims directly (`Subject`, `Roles`, `Issuer`, `Audience`, `Expiration`) to clipboard with confirmation.
-- ⌨️ **Command Palette & Zero-Leak Clipboard Inspection (`Cmd+Shift+P`):** Inspect tokens at cursor, safely decode tokens straight from the clipboard in memory without touching disk, or toggle ambient badges with one keystroke.
-- 🔍 **Rich Sanitized Hover Card:** Hover over any token to inspect decoded headers, clean claim tables (`iss`, `sub`, `aud`, `roles`), and formatted payload JSON with an unverified signature notice (`Signature: Not performed`).
+- ⌨️ **Command Palette & Zero-Leak Clipboard Inspection (`Cmd+Shift+P`):** Inspect tokens at cursor, copy sanitized tokens, safely decode tokens straight from the clipboard in memory without touching disk, or toggle ambient badges with one keystroke.
+- 🔍 **Rich Sanitized Hover Card:** Hover over any token to inspect decoded headers, clean claim tables (`iss`, `sub`, `aud`, `roles`), and formatted payload JSON with explicit signature presence (`Signature: Present, not verified`, `Signature: Missing`, or `Signature: Unexpected`).
 - 🛡️ **Credential Isolation:** Pure local execution. Raw secret strings are never logged, never transmitted over sockets, and never leaked to external networks.
 - ⏱️ **60-Second Live Timer:** Relative expiration countdowns (`Active 42m` → `Active 41m`) refresh automatically without requiring file edits or typing.
 - 🪶 **Zero Runtime Dependencies:** Strictly `"dependencies": {}`. Pure deterministic TypeScript core; fast startup with zero supply-chain risk.
+
+---
+
+## 🔒 Security & Privacy Notice
+
+- **100% Offline & Private:** JWT Glance runs completely inside your local editor. It has zero network calls, zero analytics, zero telemetry, and never logs credentials.
+- **Decoding ≠ Verification:** Ambient decoding surfaces structural claims for developer convenience. **Decoding a JWT does not prove cryptographic authenticity.** Signatures must always be verified by your backend application against verified public keys or HMAC secrets.
 
 ---
 
@@ -102,10 +110,10 @@ To test changes in a clean, isolated development window without installing anyth
 
 ### ✅ Verifying It Works in VS Code
 
-1. **Verify Ambient Badges:** Open [`test/fixtures/sample.env`](test/fixtures/sample.env) or [`test/fixtures/sample.http`](test/fixtures/sample.http). You will see the live badges above or before the tokens (e.g. `[JWT · user-42 · Active 42m]`).
-2. **Verify Hover:** Hover your mouse over any token to see the decoded claims table and payload.
-3. **Verify Action Palette:** Click any badge to open the quick copy and tab preview menu.
-4. **Verify Command Palette:** Press `Cmd+Shift+P`, type `JWT Glance`, and run `JWT Glance: Inspect Token at Cursor` or `JWT Glance: Inspect Token from Clipboard`.
+1. **Verify Ambient Badges:** Open [`sample.env`](https://github.com/kcodek/jwt-glance/blob/main/test/fixtures/sample.env) or [`sample.http`](https://github.com/kcodek/jwt-glance/blob/main/test/fixtures/sample.http). You will see the live badges above or before the tokens (e.g. `[JWT · user-42 · Active 42m]`).
+2. **Verify Hover:** Hover your mouse over any token to see the decoded claims table, signature presence status, and payload.
+3. **Verify Action Palette:** Click any badge to open the quick copy, copy sanitized token, and tab preview menu.
+4. **Verify Command Palette:** Press `Cmd+Shift+P`, type `JWT Glance`, and run `JWT Glance: Inspect Token at Cursor`, `JWT Glance: Inspect Token from Clipboard`, or `JWT Glance: Copy Sanitized Token`.
 
 ---
 
@@ -117,6 +125,7 @@ Access quick commands anytime without needing to click with the mouse:
 | :--- | :--- |
 | **`JWT Glance: Inspect Token at Cursor`** | Evaluates token under the cursor or active text selection and opens the Action Palette. If no token is at cursor, prompts to inspect clipboard. |
 | **`JWT Glance: Inspect Token from Clipboard`** | **Zero-leak mode:** Reads and decodes a JWT straight from the system clipboard into memory, opening claims and decoded JSON without pasting secrets into project files. |
+| **`JWT Glance: Copy Sanitized Token`** | Creates a structurally valid copy of the token at cursor or in clipboard with sensitive claims redacted, safe for bug tickets and logs. |
 | **`JWT Glance: Toggle Ambient Lens`** | Instantly toggles ambient CodeLens and inline badges on or off. |
 
 ---
@@ -134,7 +143,7 @@ Run the extension in a temporary, isolated VS Code window directly from source c
    ```
 2. Press **`F5`** (or open the **Run & Debug** tab `Cmd+Shift+D` and click **"Run Extension (Development Host)"**).
 3. An **[Extension Development Host]** VS Code window will launch with JWT Glance active.
-4. In that development window, open [`test/fixtures/sample.env`](test/fixtures/sample.env) to see live inlay badges and hover cards.
+4. In that development window, open [`sample.env`](https://github.com/kcodek/jwt-glance/blob/main/test/fixtures/sample.env) to see live badges and hover cards.
 5. Any source changes you make in `src/` can be reloaded instantly in the guest window via `Cmd+R` (or `Developer: Reload Window`).
 
 ---
@@ -182,11 +191,11 @@ npm run inspect
 
 ---
 
-### Approach 3: Automated Test Suite (77 Tests)
+### Approach 3: Automated Test Suite (94 Tests)
 Run the full test suite via Node's native test runner (`node:test`):
 
 ```bash
-# Run all 77 tests (unit, syntax scanner, security vectors, performance, and corpus)
+# Run all tests (unit, syntax scanner, security vectors, performance, and corpus)
 npm test
 ```
 
@@ -195,8 +204,8 @@ npm test
 # Compile tests
 npm run test:compile
 
-# Test inlay hints badge formatting
-node --test out/test/unit/inlayHints.test.js
+# Test badge formatting
+node --test out/test/unit/badgeFormatter.test.js
 
 # Test token detection across .env, .http, JSON, SQL, bash
 node --test out/test/unit/lineScanner.test.js
@@ -204,7 +213,7 @@ node --test out/test/unit/lineScanner.test.js
 # Test security attack vectors (alg confusion, malformed payloads)
 node --test out/test/unit/attackVectors.test.js
 
-# Test performance (10,000 lines scanned in ~11ms)
+# Test performance (10,000 lines scanned in under 50ms)
 node --test out/test/perf/scannerBenchmark.test.js
 
 # Test 12,000-sample adversarial corpus (verifies zero false positives)
@@ -220,8 +229,11 @@ Customize JWT Glance behavior in your VS Code `settings.json`:
 | Setting | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `jwtGlance.enabled` | `boolean` | `true` | Enable or disable ambient glance badges and hover cards. |
-| `jwtGlance.position` | `'top' \| 'left'` | `'top'` | Badge position: `'top'` renders above the line (CodeLens), `'left'` renders inline before the token. |
+| `jwtGlance.position` | `'top' \| 'left'` | `'top'` | Badge position: `'top'` renders above the line (CodeLens), `'left'` renders inline decoration before the token. |
 | `jwtGlance.maxLineLength` | `number` | `10000` | Maximum character length of a line to scan (prevents lag on minified files). |
+| `jwtGlance.maxDocumentBytes` | `number` | `524288` | Maximum document size in bytes to scan (default 512KB). Files exceeding this are skipped for performance. |
+| `jwtGlance.exclude` | `string[]` | `["**/package-lock.json", ...]` | Glob patterns of files to exclude from ambient scanning. |
+| `jwtGlance.languages` | `string[]` | `["*"]` | Language identifiers to scan (default `["*"]` for all languages). |
 
 ---
 
@@ -276,7 +288,7 @@ npm run package
 ```
 
 > [!TIP]
-> Run `npx @vscode/vsce ls` to audit the manifest. Thanks to [`.vscodeignore`](.vscodeignore), only `dist/extension.js`, `package.json`, and `README.md` are packaged—keeping the extension payload ultra-compact (~13 KB).
+> Run `npx @vscode/vsce ls` to audit the manifest. Thanks to [`.vscodeignore`](https://github.com/kcodek/jwt-glance/blob/main/.vscodeignore), only `dist/extension.js`, `images/icon.png`, `package.json`, and `README.md` are packaged—keeping the extension payload ultra-compact.
 
 ---
 

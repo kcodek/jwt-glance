@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { assessToken, parseJwt } from '../core/index';
+import { assessToken, parseJwt, createSanitizedJwt } from '../core/index';
 import { formatBadgeLabel } from './badgeFormatter';
 import {
   extractClaimSummaries,
@@ -83,6 +83,16 @@ export async function showJwtActionPalette(
           await vscode.env.clipboard.writeText(JSON.stringify(parsed.payload, null, 2));
           vscode.window.showInformationMessage('JWT Glance: Decoded payload copied to clipboard.');
         }
+      }
+    },
+    {
+      label: '$(shield) Copy Sanitized Token (Safe for Bug Reports)',
+      description: 'Structurally valid token with sensitive claims redacted',
+      buttons: [copyButton],
+      action: async () => {
+        const sanitized = createSanitizedJwt(rawToken);
+        await vscode.env.clipboard.writeText(sanitized);
+        vscode.window.showInformationMessage('JWT Glance: Sanitized token copied to clipboard.');
       }
     },
     {
@@ -221,6 +231,51 @@ export async function toggleAmbientLens(): Promise<void> {
     `JWT Glance: Ambient inspection ${!current ? 'Enabled' : 'Disabled'}`,
     3000
   );
+}
+
+/**
+  * Command: JWT Glance: Copy Sanitized Token
+  */
+export async function copySanitizedToken(): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  const now = Math.floor(Date.now() / 1000);
+
+  let candidate: string | undefined;
+  if (editor) {
+    const selection = editor.selection;
+    if (!selection.isEmpty) {
+      const selectedText = editor.document.getText(selection).trim();
+      const resolved = resolveTokenFromText(selectedText, now);
+      if (resolved) {
+        candidate = resolved.raw;
+      }
+    }
+
+    if (!candidate) {
+      const line = editor.document.lineAt(selection.active.line);
+      const target = resolveTokenAtPosition(line.text, selection.active.character);
+      if (target) {
+        candidate = target.raw;
+      }
+    }
+  }
+
+  if (!candidate) {
+    const clipboardText = await vscode.env.clipboard.readText();
+    const resolved = resolveTokenFromText(clipboardText || '', now);
+    if (resolved) {
+      candidate = resolved.raw;
+    }
+  }
+
+  if (!candidate) {
+    vscode.window.showWarningMessage('JWT Glance: No token found under cursor or in clipboard.');
+    return;
+  }
+
+  const sanitized = createSanitizedJwt(candidate);
+  await vscode.env.clipboard.writeText(sanitized);
+  vscode.window.showInformationMessage('JWT Glance: Sanitized token copied to clipboard.');
 }
 
 /**
