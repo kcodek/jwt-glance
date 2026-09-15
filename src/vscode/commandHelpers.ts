@@ -77,3 +77,41 @@ export function resolveTokenFromText(
   }
   return undefined;
 }
+
+/**
+ * Opens formatted decoded header and payload JSON in a new untitled document tab.
+ */
+export async function openDecodedTokenInEditor(
+  rawToken: string,
+  assessment: RecognizedToken,
+  vscodeRef: typeof import('vscode')
+): Promise<void> {
+  const { parseJwt } = await import('../core/index');
+  const parsed = parseJwt(rawToken);
+  if (!('reason' in parsed)) {
+    const content = JSON.stringify(
+      {
+        _summary: {
+          algorithm: assessment.algorithm,
+          temporalStatus: assessment.temporalStatus,
+          expiresAtIso: assessment.expiresAtIso,
+          secondsUntilExpiration: assessment.secondsUntilExpiration,
+          subject: assessment.subject,
+          issuer: assessment.issuer,
+          audience: assessment.audience,
+          roles: assessment.roles
+        },
+        header: parsed.header,
+        payload: parsed.payload
+      },
+      null,
+      2
+    );
+    const doc = await vscodeRef.workspace.openTextDocument({
+      language: 'json',
+      content
+    });
+    await vscodeRef.window.showTextDocument(doc, { preview: true });
+  }
+}
+

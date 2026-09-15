@@ -30,8 +30,9 @@ test('RFC 7519 assessment evaluates registered claims correctly', () => {
     assert.equal(assessment.temporalStatus, 'ACTIVE');
     assert.equal(assessment.secondsUntilExpiration, 380);
     assert.equal(assessment.expiresAtIso, '2011-03-22T18:43:00.000Z');
-    assert.equal(assessment.verification.status, 'NOT_PERFORMED');
+    assert.equal(assessment.signature.verification, 'NOT_PERFORMED');
   }
+
 });
 
 test('RFC 7519 handles UTF-8 multibyte characters in claims', () => {

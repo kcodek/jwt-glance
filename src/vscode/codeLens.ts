@@ -39,7 +39,11 @@ export class JwtCodeLensProvider implements vscode.CodeLensProvider {
 
       const candidates = findCandidateTokens(line.text);
       for (const candidate of candidates) {
+        if (_token.isCancellationRequested) {
+          return [];
+        }
         const assessment = assessToken(candidate.raw, nowEpoch);
+
         if (assessment.recognized) {
           const range = new vscode.Range(
             lineNum,

@@ -88,8 +88,7 @@ test('extractClaimSummaries extracts all present claims and handles array audien
     audience: ['api-service', 'billing-service'],
     subject: 'service-worker-99',
     roles: ['operator', 'auditor'],
-    warnings: [],
-    verification: { status: 'NOT_PERFORMED' }
+    warnings: []
   };
 
   const summaries = extractClaimSummaries(fullToken);
@@ -134,9 +133,9 @@ test('extractClaimSummaries handles single string audience and omits absent clai
     audience: 'single-client-app',
     subject: 'usr-1',
     roles: [],
-    warnings: [],
-    verification: { status: 'NOT_PERFORMED' }
+    warnings: []
   };
+
 
   const summaries = extractClaimSummaries(minimalToken);
   assert.equal(summaries.length, 2); // Only subject and audience

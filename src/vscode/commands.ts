@@ -4,7 +4,8 @@ import { formatBadgeLabel } from './badgeFormatter';
 import {
   extractClaimSummaries,
   resolveTokenAtPosition,
-  resolveTokenFromText
+  resolveTokenFromText,
+  openDecodedTokenInEditor
 } from './commandHelpers';
 
 export interface JwtActionItem extends vscode.QuickPickItem {
@@ -19,6 +20,7 @@ const copyButton: vscode.QuickInputButton = {
 /**
  * Renders an interactive QuickPick action sheet for any recognized JWT.
  */
+
 export async function showJwtActionPalette(
   rawToken: string,
   range?: vscode.Range
@@ -45,32 +47,7 @@ export async function showJwtActionPalette(
       label: '$(json) Open Decoded Token in New Editor',
       description: 'View full formatted header and payload JSON in a dedicated editor tab',
       action: async () => {
-        const parsed = parseJwt(rawToken);
-        if (!('reason' in parsed)) {
-          const content = JSON.stringify(
-            {
-              _summary: {
-                algorithm: assessment.algorithm,
-                temporalStatus: assessment.temporalStatus,
-                expiresAtIso: assessment.expiresAtIso,
-                secondsUntilExpiration: assessment.secondsUntilExpiration,
-                subject: assessment.subject,
-                issuer: assessment.issuer,
-                audience: assessment.audience,
-                roles: assessment.roles
-              },
-              header: parsed.header,
-              payload: parsed.payload
-            },
-            null,
-            2
-          );
-          const doc = await vscode.workspace.openTextDocument({
-            language: 'json',
-            content
-          });
-          await vscode.window.showTextDocument(doc, { preview: true });
-        }
+        await openDecodedTokenInEditor(rawToken, assessment, vscode);
       }
     },
     {
@@ -86,13 +63,13 @@ export async function showJwtActionPalette(
       }
     },
     {
-      label: '$(shield) Copy Sanitized Token (Safe for Bug Reports)',
-      description: 'Structurally valid token with sensitive claims redacted',
+      label: '$(shield) Copy Redacted Token (Safe for Diagnostics)',
+      description: 'Diagnostic token with unverified claims redacted. Intentionally invalid for authentication.',
       buttons: [copyButton],
       action: async () => {
-        const sanitized = createSanitizedJwt(rawToken);
-        await vscode.env.clipboard.writeText(sanitized);
-        vscode.window.showInformationMessage('JWT Glance: Sanitized token copied to clipboard.');
+        const redacted = createSanitizedJwt(rawToken);
+        await vscode.env.clipboard.writeText(redacted);
+        vscode.window.showInformationMessage('JWT Glance: Redacted diagnostic token copied to clipboard.');
       }
     },
     {
@@ -104,6 +81,7 @@ export async function showJwtActionPalette(
         vscode.window.showInformationMessage('JWT Glance: Raw token copied to clipboard.');
       }
     }
+
   ];
 
   const claimSummaries = extractClaimSummaries(assessment);
@@ -234,9 +212,9 @@ export async function toggleAmbientLens(): Promise<void> {
 }
 
 /**
-  * Command: JWT Glance: Copy Sanitized Token
-  */
-export async function copySanitizedToken(): Promise<void> {
+ * Command: JWT Glance: Copy Redacted Token
+ */
+export async function copyRedactedToken(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   const now = Math.floor(Date.now() / 1000);
 
@@ -273,13 +251,19 @@ export async function copySanitizedToken(): Promise<void> {
     return;
   }
 
-  const sanitized = createSanitizedJwt(candidate);
-  await vscode.env.clipboard.writeText(sanitized);
-  vscode.window.showInformationMessage('JWT Glance: Sanitized token copied to clipboard.');
+  const redacted = createSanitizedJwt(candidate);
+  await vscode.env.clipboard.writeText(redacted);
+  vscode.window.showInformationMessage('JWT Glance: Redacted diagnostic token copied to clipboard.');
 }
 
 /**
+ * Backward-compatible alias
+ */
+export const copySanitizedToken = copyRedactedToken;
+
+/**
  * Handler for CodeLens or badge click
+
  */
 export async function handleInspectTokenCommand(
   _uri?: vscode.Uri,

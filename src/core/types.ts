@@ -19,7 +19,8 @@ export type VerificationStatus =
 
 export type SignaturePresence =
   | 'PRESENT'
-  | 'MISSING'
+  | 'EMPTY'
+  | 'ABSENT'
   | 'UNEXPECTED';
 
 export type StructuralWarning =
@@ -54,9 +55,7 @@ export interface RecognizedToken {
   subject: string | null;
   roles: string[];
   warnings: TokenWarning[];
-  verification: {
-    status: VerificationStatus;
-  };
 }
 
 export type TokenAssessment = UnrecognizedToken | RecognizedToken;
+

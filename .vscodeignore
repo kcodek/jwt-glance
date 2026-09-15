@@ -13,3 +13,5 @@ spec.md
 **/*.map
 .env*
 images/preview.png
+CONTRIBUTING.md
+

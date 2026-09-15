@@ -14,17 +14,30 @@ test('assessToken returns RecognizedToken for valid HS256', () => {
     assert.equal(result.isUnsecured, false);
     assert.equal(result.subject, '1234567890');
     assert.equal(result.temporalStatus, 'NO_EXPIRATION');
-    assert.equal(result.verification.status, 'NOT_PERFORMED');
+    assert.equal(result.signature.presence, 'PRESENT');
+    assert.equal(result.signature.verification, 'NOT_PERFORMED');
   }
 });
 
-test('assessToken flags alg:none as isUnsecured: true', () => {
+test('assessToken flags alg:none with empty signature as isUnsecured and EMPTY signature', () => {
   const result = assessToken(ALG_NONE, NOW);
   assert.equal(result.recognized, true);
   if (result.recognized) {
     assert.equal(result.algorithm, 'none');
     assert.equal(result.isUnsecured, true);
     assert.equal(result.subject, 'user1');
+    assert.equal(result.signature.presence, 'EMPTY');
+    assert.ok(result.warnings.includes('UNSECURED_ALG_NONE'));
+  }
+});
+
+test('assessToken flags alg:none with unexpected signature segment', () => {
+  const unexpectedSigToken = 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyMSJ9.unexpected';
+  const result = assessToken(unexpectedSigToken, NOW);
+  assert.equal(result.recognized, true);
+  if (result.recognized) {
+    assert.equal(result.signature.presence, 'UNEXPECTED');
+    assert.ok(result.warnings.includes('UNEXPECTED_SIGNATURE'));
   }
 });
 
@@ -40,7 +53,7 @@ test('assessToken correctly identifies roles from roles claim', () => {
   }
 });
 
-test('assessToken returns RecognizedToken for valid 2-segment token', () => {
+test('assessToken returns RecognizedToken for valid 2-segment token (ABSENT signature)', () => {
   const twoPart = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiZXhwIjoxNTE2MjM5MDIyfQ';
   // At reference time NOW (1516239022 === exp), token is expired per RFC 7519
   const result = assessToken(twoPart, NOW);
@@ -50,7 +63,7 @@ test('assessToken returns RecognizedToken for valid 2-segment token', () => {
     assert.equal(result.subject, '1234567890');
     assert.equal(result.temporalStatus, 'EXPIRED');
     assert.equal(result.segmentCount, 2);
-    assert.equal(result.signature.presence, 'MISSING');
+    assert.equal(result.signature.presence, 'ABSENT');
     assert.ok(result.warnings.includes('TWO_SEGMENT_INSPECTION'));
     assert.ok(result.warnings.includes('SIGNATURE_MISSING'));
   }
@@ -61,6 +74,7 @@ test('assessToken returns RecognizedToken for valid 2-segment token', () => {
     assert.equal(activeResult.temporalStatus, 'ACTIVE');
   }
 });
+
 
 test('assessToken returns UnrecognizedToken for invalid input', () => {
   const result = assessToken('invalid.jwt', NOW);

@@ -19,13 +19,20 @@ export function formatHoverContent(
   lines.push(`### JWT Glance · \`${token.temporalStatus}\` ${relativeTimeStr}`);
 
   let sigText = 'ℹ️ **Signature: Not performed** *(Local inspection only)*';
-  if (token.signature?.presence === 'MISSING') {
-    sigText = '⚠️ **Signature: Missing** *(No signature segment found)*';
+  if (token.signature?.presence === 'ABSENT') {
+    sigText = '⚠️ **Signature: Absent** *(Two-segment inspection)*';
+  } else if (token.signature?.presence === 'EMPTY') {
+    if (token.isUnsecured) {
+      sigText = 'ℹ️ **Signature: Empty** *(Expected RFC 7519 unsecured form)*';
+    } else {
+      sigText = '⚠️ **Signature: Empty** *(Signature bytes missing)*';
+    }
   } else if (token.signature?.presence === 'UNEXPECTED') {
     sigText = '⚠️ **Signature: Unexpected** *(alg:none with signature)*';
   } else if (token.signature?.presence === 'PRESENT') {
     sigText = 'ℹ️ **Signature: Present, not verified** *(Local inspection only)*';
   }
+
 
   lines.push(`**Algorithm:** \`${token.algorithm}\`${unsecuredBadge} &nbsp;|&nbsp; ${sigText}`);
   lines.push('');

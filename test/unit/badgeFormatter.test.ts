@@ -29,8 +29,7 @@ test('formatBadgeLabel formats active token with subject', () => {
     audience: null,
     subject: 'user-42',
     roles: ['admin'],
-    warnings: [],
-    verification: { status: 'NOT_PERFORMED' }
+    warnings: []
   };
 
   const label = formatBadgeLabel(token);
@@ -55,8 +54,7 @@ test('formatBadgeLabel formats token without subject when subject is null', () =
     audience: null,
     subject: null,
     roles: ['admin'],
-    warnings: [],
-    verification: { status: 'NOT_PERFORMED' }
+    warnings: []
   };
 
   const label = formatBadgeLabel(token);
@@ -79,8 +77,7 @@ test('formatBadgeLabel formats expired token', () => {
     audience: null,
     subject: null,
     roles: [],
-    warnings: [],
-    verification: { status: 'NOT_PERFORMED' }
+    warnings: []
   };
 
   const label = formatBadgeLabel(token);
@@ -93,7 +90,7 @@ test('formatBadgeLabel formats alg:none unsecured token with prominent warning',
     algorithm: 'none',
     isUnsecured: true,
     segmentCount: 3,
-    signature: { presence: 'MISSING', verification: 'NOT_PERFORMED' },
+    signature: { presence: 'EMPTY', verification: 'NOT_PERFORMED' },
     temporalStatus: 'ACTIVE',
     expiresAtIso: '2026-09-10T14:00:00.000Z',
     secondsUntilExpiration: 2520,
@@ -103,8 +100,7 @@ test('formatBadgeLabel formats alg:none unsecured token with prominent warning',
     audience: null,
     subject: 'local-dev-user',
     roles: [],
-    warnings: ['UNSECURED_ALG_NONE'],
-    verification: { status: 'NOT_PERFORMED' }
+    warnings: ['UNSECURED_ALG_NONE']
   };
 
   const label = formatBadgeLabel(token);
@@ -117,7 +113,7 @@ test('formatBadgeLabel formats signed token with missing signature with prominen
     algorithm: 'RS256',
     isUnsecured: false,
     segmentCount: 2,
-    signature: { presence: 'MISSING', verification: 'NOT_PERFORMED' },
+    signature: { presence: 'ABSENT', verification: 'NOT_PERFORMED' },
     temporalStatus: 'ACTIVE',
     expiresAtIso: '2026-09-10T14:00:00.000Z',
     secondsUntilExpiration: 2520,
@@ -127,10 +123,10 @@ test('formatBadgeLabel formats signed token with missing signature with prominen
     audience: null,
     subject: 'service-account',
     roles: [],
-    warnings: ['SIGNATURE_MISSING', 'TWO_SEGMENT_INSPECTION'],
-    verification: { status: 'NOT_PERFORMED' }
+    warnings: ['SIGNATURE_MISSING', 'TWO_SEGMENT_INSPECTION']
   };
 
   const label = formatBadgeLabel(token);
   assert.equal(label, 'JWT · RS256 NO SIG ⚠️ · service-account · Active 42m');
 });
+

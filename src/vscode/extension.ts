@@ -52,10 +52,16 @@ export function activate(context: vscode.ExtensionContext): void {
     inspectFromClipboard
   );
 
+  const copyRedactedTokenCmd = vscode.commands.registerCommand(
+    'jwtGlance.copyRedactedToken',
+    copySanitizedToken
+  );
+
   const copySanitizedTokenCmd = vscode.commands.registerCommand(
     'jwtGlance.copySanitizedToken',
     copySanitizedToken
   );
+
 
   const toggleEnabledCmd = vscode.commands.registerCommand(
     'jwtGlance.toggleEnabled',
@@ -127,8 +133,10 @@ export function activate(context: vscode.ExtensionContext): void {
     inspectTokenCmd,
     inspectAtCursorCmd,
     inspectFromClipboardCmd,
+    copyRedactedTokenCmd,
     copySanitizedTokenCmd,
     toggleEnabledCmd,
+
     showHoverCmd,
     visibleRangesDisposable,
     activeEditorDisposable,

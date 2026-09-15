@@ -21,11 +21,9 @@ test('TokenAssessment discriminated union narrows correctly', () => {
     audience: 'api-service',
     subject: 'user-123',
     roles: ['admin'],
-    warnings: [],
-    verification: {
-      status: 'NOT_PERFORMED'
-    }
+    warnings: []
   };
+
 
   const unrecognized: TokenAssessment = {
     recognized: false,

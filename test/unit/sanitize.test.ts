@@ -19,19 +19,42 @@ test('sanitizeMarkdown handles non-string values safely', () => {
   assert.equal(sanitizeMarkdown(undefined as unknown as string), '');
 });
 
-test('createSanitizedJwt redacts sensitive claims while preserving structure and temporal claims', () => {
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsImVtYWlsIjoiam9obkBkb2UuY29tIiwicm9sZXMiOlsic3VwZXJhZG1pbiJdLCJleHAiOjE5MDAwMDAwMDB9.dGVzdHNpZw';
-  const sanitized = createSanitizedJwt(token);
+test('createRedactedJwt strictly redacts custom claims and headers while preserving safe registered claims', () => {
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InNlY3JldC1rZXktNDIifQ.eyJzdWIiOiJ1c2VyLTEyMyIsImVtcGxveWVlSWQiOjQ5OTk5LCJpc0FkbWluIjp0cnVlLCJlbWFpbCI6ImpvaG5AZG9lLmNvbSIsInJvbGVzIjpbInN1cGVyYWRtaW4iXSwidGVuYW50Ijp7ImlkIjoxfSwiZXhwIjoxOTAwMDAwMDAwLCJpYXQiOjE4MDAwMDAwMDB9.dGVzdHNpZw';
+  const redacted = createSanitizedJwt(token);
 
-  assert.notEqual(sanitized, token);
-  const parsed = parseJwt(sanitized);
+  assert.notEqual(redacted, token);
+  const parsed = parseJwt(redacted);
   assert.equal('reason' in parsed, false);
   if (!('reason' in parsed)) {
+    // Allowed header claims
     assert.equal(parsed.header['alg'], 'HS256');
-    assert.equal(parsed.payload['sub'], 'sanitized-subject');
-    assert.equal(parsed.payload['email'], '[REDACTED]');
-    assert.deepEqual(parsed.payload['roles'], ['[REDACTED]']);
+    assert.equal(parsed.header['typ'], 'JWT');
+    // Custom header claims redacted
+    assert.equal(parsed.header['kid'], '[REDACTED]');
+
+    // Safe payload claims preserved
     assert.equal(parsed.payload['exp'], 1900000000);
+    assert.equal(parsed.payload['iat'], 1800000000);
+
+    // All custom payload claims redacted regardless of type (string, number, boolean, array, object)
+    assert.equal(parsed.payload['sub'], '[REDACTED]');
+    assert.equal(parsed.payload['employeeId'], '[REDACTED]');
+    assert.equal(parsed.payload['isAdmin'], '[REDACTED]');
+    assert.equal(parsed.payload['email'], '[REDACTED]');
+    assert.equal(parsed.payload['roles'], '[REDACTED]');
+    assert.equal(parsed.payload['tenant'], '[REDACTED]');
+
+    // Visible synthetic signature
+    assert.equal(parsed.signature, 'REDACTED_SIGNATURE');
     assert.ok(parsed.hasSignature);
   }
 });
+
+test('createRedactedJwt preserves 2-segment tokens without adding synthetic signature', () => {
+  const token = 'eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE5MDAwMDAwMDB9';
+  const redacted = createSanitizedJwt(token);
+  const parts = redacted.split('.');
+  assert.equal(parts.length, 2);
+});
+

@@ -10,7 +10,8 @@ JWT Glance is strictly an **offline, local developer tool**:
 
 - **Zero Network Requests**: The extension makes no outbound HTTP/HTTPS requests, does not fetch JWKS keys, and does not talk to third-party endpoints.
 - **Zero Telemetry**: No tracking, usage analytics, or error telemetry is gathered or transmitted.
-- **Zero Token Persistence**: Candidate tokens are inspected strictly in memory within the local editor session and are never cached to disk or logged to output channels.
+- **Zero Token Persistence**: JWT Glance does not intentionally write raw tokens to files, logs, extension storage or output channels. Content opened in an untitled editor is subject to VS Code’s backup and Hot Exit behavior.
+
 
 ## Cryptographic Trust Notice
 

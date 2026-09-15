@@ -7,6 +7,8 @@ export * from './detect';
 export * from './parse';
 export * from './temporal';
 export * from './sanitize';
+export * from './filter';
+
 
 function extractRoles(payload: Record<string, unknown>): string[] {
   const rolesSet = new Set<string>();
@@ -55,13 +57,13 @@ export function assessToken(
 
   let signaturePresence: SignaturePresence;
   if (parsed.segmentCount === 2) {
-    signaturePresence = 'MISSING';
+    signaturePresence = 'ABSENT';
     warnings.push('TWO_SEGMENT_INSPECTION');
     if (!isAlgNone) {
       warnings.push('SIGNATURE_MISSING');
     }
   } else if (!parsed.hasSignature) {
-    signaturePresence = 'MISSING';
+    signaturePresence = 'EMPTY';
     if (isAlgNone) {
       warnings.push('UNSECURED_ALG_NONE');
     } else {
@@ -113,10 +115,7 @@ export function assessToken(
     audience,
     subject,
     roles,
-    warnings,
-    verification: {
-      status: 'NOT_PERFORMED'
-    }
+    warnings
   };
 
   return recognized;

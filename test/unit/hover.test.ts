@@ -19,8 +19,7 @@ test('formatHoverContent includes algorithm, signature notice, and sanitized cla
     audience: 'api-gateway',
     subject: 'user|123',
     roles: ['admin', 'viewer'],
-    warnings: [],
-    verification: { status: 'NOT_PERFORMED' }
+    warnings: []
   };
 
   const md = formatHoverContent(token, { sub: 'user|123', roles: ['admin', 'viewer'] });
@@ -40,7 +39,7 @@ test('formatHoverContent flags unsecured alg:none prominently', () => {
     algorithm: 'none',
     isUnsecured: true,
     segmentCount: 3,
-    signature: { presence: 'MISSING', verification: 'NOT_PERFORMED' },
+    signature: { presence: 'EMPTY', verification: 'NOT_PERFORMED' },
     temporalStatus: 'ACTIVE',
     expiresAtIso: null,
     secondsUntilExpiration: null,
@@ -50,10 +49,11 @@ test('formatHoverContent flags unsecured alg:none prominently', () => {
     audience: null,
     subject: null,
     roles: [],
-    warnings: ['UNSECURED_ALG_NONE'],
-    verification: { status: 'NOT_PERFORMED' }
+    warnings: ['UNSECURED_ALG_NONE']
   };
 
   const md = formatHoverContent(token);
   assert.ok(md.includes('UNSECURED'));
+  assert.ok(md.includes('Signature: Empty'));
 });
+
