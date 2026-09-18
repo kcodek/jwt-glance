@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import * as assert from 'node:assert/strict';
-import { sanitizeMarkdown, createSanitizedJwt } from '../../src/core/sanitize';
+import { sanitizeMarkdown, createRedactedJwt } from '../../src/core/sanitize';
 import { parseJwt } from '../../src/core/parse';
 
 test('sanitizeMarkdown escapes markdown formatting characters', () => {
@@ -21,7 +21,7 @@ test('sanitizeMarkdown handles non-string values safely', () => {
 
 test('createRedactedJwt strictly redacts custom claims and headers while preserving safe registered claims', () => {
   const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InNlY3JldC1rZXktNDIifQ.eyJzdWIiOiJ1c2VyLTEyMyIsImVtcGxveWVlSWQiOjQ5OTk5LCJpc0FkbWluIjp0cnVlLCJlbWFpbCI6ImpvaG5AZG9lLmNvbSIsInJvbGVzIjpbInN1cGVyYWRtaW4iXSwidGVuYW50Ijp7ImlkIjoxfSwiZXhwIjoxOTAwMDAwMDAwLCJpYXQiOjE4MDAwMDAwMDB9.dGVzdHNpZw';
-  const result = createSanitizedJwt(token);
+  const result = createRedactedJwt(token);
 
   assert.equal(result.success, true);
   if (result.success) {
@@ -56,7 +56,7 @@ test('createRedactedJwt strictly redacts custom claims and headers while preserv
 
 test('createRedactedJwt preserves 2-segment tokens without adding synthetic signature', () => {
   const token = 'eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE5MDAwMDAwMDB9';
-  const result = createSanitizedJwt(token);
+  const result = createRedactedJwt(token);
   assert.equal(result.success, true);
   if (result.success) {
     const parts = result.token.split('.');
@@ -75,7 +75,7 @@ test('createRedactedJwt redacts malformed non-numeric temporal claims and non-st
   })).toString('base64url');
   const adversarialToken = `${rawHeader}.${rawPayload}.invalidsig`;
 
-  const result = createSanitizedJwt(adversarialToken);
+  const result = createRedactedJwt(adversarialToken);
   assert.equal(result.success, true);
   if (result.success) {
     assert.ok(!result.token.includes('customer-account-12345'));
@@ -100,10 +100,9 @@ test('createRedactedJwt redacts malformed non-numeric temporal claims and non-st
 
 test('createRedactedJwt returns failure result for unrecognized tokens and never raw input', () => {
   const invalidToken = 'not.a.valid.jwt.token.string';
-  const result = createSanitizedJwt(invalidToken);
+  const result = createRedactedJwt(invalidToken);
   assert.equal(result.success, false);
   if (!result.success) {
     assert.ok(result.reason);
   }
 });
-

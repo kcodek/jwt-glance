@@ -56,8 +56,3 @@ export function createRedactedJwt(rawToken: string): RedactionResult {
   return { success: true, token: `${headerB64}.${payloadB64}.${sigSegment}` };
 }
 
-/**
- * Backward-compatible alias for createRedactedJwt
- */
-export const createSanitizedJwt = createRedactedJwt;
-

@@ -265,13 +265,7 @@ export async function copyRedactedToken(): Promise<void> {
 }
 
 /**
- * Backward-compatible alias
- */
-export const copySanitizedToken = copyRedactedToken;
-
-/**
  * Handler for CodeLens or badge click
-
  */
 export async function handleInspectTokenCommand(
   _uri?: vscode.Uri,

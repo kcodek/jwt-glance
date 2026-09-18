@@ -69,6 +69,8 @@ Customize JWT Glance behavior in your VS Code `settings.json`:
 | `jwtGlance.exclude` | `string[]` | `["**/package-lock.json", ...]` | Glob patterns of files to exclude from ambient scanning. |
 | `jwtGlance.languages` | `string[]` | `["*"]` | Language identifiers to scan (default `["*"]` for all languages). |
 
+> **Setting scope:** VS Code workspace settings in `.vscode/settings.json` override profile and user settings. If `jwtGlance.position` does not change as expected, check the workspace settings for an existing value. Position changes take effect immediately in open editors.
+
 ---
 
 ## 🤝 Contributing & Development

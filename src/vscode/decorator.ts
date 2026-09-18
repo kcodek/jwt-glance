@@ -64,7 +64,7 @@ export class JwtDecorationProvider {
             lineNum,
             candidate.startIndex,
             lineNum,
-            candidate.startIndex
+            candidate.endIndex
           );
 
           let payload: Record<string, unknown> | undefined;
@@ -81,7 +81,10 @@ export class JwtDecorationProvider {
             hoverMessage: hoverMd,
             renderOptions: {
               before: {
-                contentText: badgeText
+                contentText: ` ${badgeText} `,
+                color: new vscode.ThemeColor('editorInlayHint.foreground'),
+                backgroundColor: new vscode.ThemeColor('editorInlayHint.background'),
+                margin: '0 6px 0 0'
               }
             }
           });
