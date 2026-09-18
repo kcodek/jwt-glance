@@ -22,5 +22,9 @@ export function isDocumentEligible(document: vscode.TextDocument): boolean {
   };
 
   const path = document.uri.fsPath || document.uri.path || document.uri.toString();
-  return isEligible(path, document.languageId, document.getText().length, config);
+  const lastLine = Math.max(0, document.lineCount - 1);
+  const charCount = document.lineCount > 0
+    ? document.offsetAt(new vscode.Position(lastLine, document.lineAt(lastLine).text.length))
+    : 0;
+  return isEligible(path, document.languageId, charCount, config);
 }

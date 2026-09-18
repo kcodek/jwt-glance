@@ -22,5 +22,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cancellation token support for long line scans in CodeLens.
 - **RFC 7519 Boundary Compliance**: Strict expiration handling at `now === exp` (`EXPIRED`).
 - **Interactive Action Palette**: QuickPick menu for one-click claim copying, zero-leak clipboard inspection, and opening decoded tokens in a JSON editor tab.
-- **Automated CI/CD & Verification**: GitHub Actions workflows on Node 20.x and 22.x, tag-based release packaging, Dependabot configuration, and 107-test automated test suite.
+- **Automated CI/CD & Verification**: GitHub Actions workflows on Node 20.x and 22.x, tag-based release packaging, Dependabot configuration, and 109-test automated test suite.
 
