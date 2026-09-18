@@ -4,7 +4,7 @@
 
 ![JWT Glance Ambient Lens Preview](images/preview.png)
 
-JWT Glance automatically surfaces JWT expiration countdowns, algorithm details, and sanitized claim cards directly within your editor—eliminating the insecure reflex of pasting sensitive credentials into third-party web decoders (`jwt.io`) and preventing cryptic `401 Unauthorized` test failures caused by stale fixtures.
+JWT Glance automatically surfaces JWT expiration countdowns, algorithm details, and decoded claim cards directly within your editor—eliminating the insecure reflex of pasting sensitive credentials into third-party web decoders (`jwt.io`) and preventing cryptic `401 Unauthorized` test failures caused by stale fixtures.
 
 ---
 
@@ -12,7 +12,7 @@ JWT Glance automatically surfaces JWT expiration countdowns, algorithm details, 
 
 - ⚡ **Zero-Click Ambient Badges & CodeLens:** Badges appear immediately above the line (`position: top`) or inline before detected tokens (`position: left`) in `.env`, `.http`, `.rest`, `.json`, `.yml`, and source files (e.g. `[JWT · user-42 · Active 42m]`, `[JWT · RS256 NO SIG ⚠️ · service · Active 2h]`, or `[JWT · UNSECURED alg:none · local-dev-user · Active 42m]`).
 - 🧩 **Standard 3-Segment & Two-Segment Inspection:** Accurately inspects standard signed 3-segment tokens (`header.payload.signature`), flags missing signatures on signed algorithms, and supports two-segment JWT inspection (`header.payload`) commonly found in `.env` drafts and mocks.
-- 🎯 **Interactive Action Palette:** Click any badge to open a quick action menu:
+- 🎯 **Interactive Action Palette:** Click any CodeLens badge (or run `Cmd+Shift+P` → *Inspect Token at Cursor*) to open a quick action menu:
   - **Open Decoded Token in New Editor:** Opens a dedicated, formatted JSON editor tab with syntax highlighting, searchability, and folding.
   - **Copy Redacted Token:** Exports a diagnostic token with custom claim values and signatures redacted for bug reports and tickets.
   - **Copy Actions:** Copy decoded payload JSON or raw token string.
@@ -20,7 +20,7 @@ JWT Glance automatically surfaces JWT expiration countdowns, algorithm details, 
 - ⌨️ **Command Palette & Clipboard Inspection (`Cmd+Shift+P`):** Inspect tokens at cursor, copy redacted tokens, decode tokens straight from the clipboard in memory, or toggle ambient badges with one keystroke.
 - 🔍 **Rich Hover Card:** Hover over any token to inspect decoded headers, clean claim tables (`iss`, `sub`, `aud`, `roles`), and formatted payload JSON with explicit signature presence indicator.
 - ⏱️ **60-Second Live Timer:** Relative expiration countdowns (`Active 42m` → `Active 41m`) refresh automatically without requiring file edits or typing.
-- 🪶 **Zero Runtime Dependencies:** Strictly `"dependencies": {}`. Pure deterministic TypeScript core; fast startup with zero supply-chain risk.
+- 🪶 **Zero Runtime Dependencies:** Strictly `"dependencies": {}`. Pure deterministic TypeScript core with fast startup.
 
 ---
 
@@ -39,9 +39,9 @@ JWT Glance automatically surfaces JWT expiration countdowns, algorithm details, 
 
 1. **Install JWT Glance** from the VS Code Marketplace or from a packaged `.vsix`.
 2. Open any file containing JWTs (e.g. `.env`, `.http`, `.json`, `.yml`, `.ts`, `.py`).
-3. **Ambient Badges:** Badges appear above each recognized token showing the subject and relative expiration status.
+3. **Ambient Badges:** Badges appear above (`position: top`) or inline before (`position: left`) each recognized token showing the subject and relative expiration status.
 4. **Hover Cards:** Hover your mouse over any token to view header parameters, claim tables, and formatted payload JSON.
-5. **Action Palette:** Click on any badge to copy claims, copy redacted diagnostic tokens, or open formatted JSON in a new tab.
+5. **Action Palette:** Click on any CodeLens badge (or run `Cmd+Shift+P` → *Inspect Token at Cursor*) to copy claims, copy redacted diagnostic tokens, or open formatted JSON in a new tab.
 
 ---
 

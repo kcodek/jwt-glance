@@ -50,7 +50,7 @@ ln -s "$(pwd)" ~/.vscode-insiders/extensions/jwt-glance
 ```
 After linking, run `npm run build` and press `Cmd+Shift+P` -> **`Developer: Reload Window`**.
 
-### 3. Terminal CLI Inspector (No Editor Needed)
+### 3. Terminal Development Inspector (No Editor Needed)
 Quickly test token parsing and formatting directly in the terminal:
 
 ```bash
