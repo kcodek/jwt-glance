@@ -14,7 +14,6 @@ spec.md
 .git/**
 **/*.map
 .env*
-images/preview.*
 images/*.svg
 CONTRIBUTING.md
 

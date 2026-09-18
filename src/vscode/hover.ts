@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { findCandidateTokens, assessToken, parseJwt } from '../core/index';
 import { formatHoverContent } from './hoverFormatter';
+import { isDocumentEligible } from './filter';
 
 export class JwtHoverProvider implements vscode.HoverProvider {
   public provideHover(
@@ -8,12 +9,11 @@ export class JwtHoverProvider implements vscode.HoverProvider {
     position: vscode.Position,
     _token: vscode.CancellationToken
   ): vscode.ProviderResult<vscode.Hover> {
-    const config = vscode.workspace.getConfiguration('jwtGlance');
-    const isEnabled = config.get<boolean>('enabled', true);
-    if (!isEnabled) {
+    if (!isDocumentEligible(document)) {
       return null;
     }
 
+    const config = vscode.workspace.getConfiguration('jwtGlance');
     const line = document.lineAt(position.line);
     const maxLineLength = config.get<number>('maxLineLength', 10000);
     if (line.text.length > maxLineLength) {

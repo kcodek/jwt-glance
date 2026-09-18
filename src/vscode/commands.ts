@@ -63,8 +63,8 @@ export async function showJwtActionPalette(
       }
     },
     {
-      label: '$(shield) Copy Redacted Token (Safe for Diagnostics)',
-      description: 'Diagnostic token with unverified claims redacted. Intentionally invalid for authentication.',
+      label: '$(shield) Copy Redacted Token (Redacts Custom Claims)',
+      description: 'Diagnostic token preserving standard timing/headers with custom claims and signature redacted. Invalid for auth.',
       buttons: [copyButton],
       action: async () => {
         const redaction = createRedactedJwt(rawToken);
