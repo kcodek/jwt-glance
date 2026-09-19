@@ -83,4 +83,4 @@ For security policies and vulnerability reporting, see [SECURITY.md](SECURITY.md
 
 ## 📄 License
 
-MIT © 2026 JWT Glance Contributors
+MIT © 2026 kcodek
