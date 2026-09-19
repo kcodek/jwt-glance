@@ -16,5 +16,8 @@ spec.md
 .env*
 images/*.svg
 CONTRIBUTING.md
+TODO.md
+node_modules/**
+
 
 

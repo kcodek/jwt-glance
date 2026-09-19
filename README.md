@@ -2,7 +2,7 @@
 
 > **Zero-click ambient JWT inspection lens for VS Code & Cursor.**
 
-![JWT Glance Ambient Lens Preview](images/preview.png)
+![JWT Glance Ambient Lens Preview](./images/OpenDecodedToken.gif)
 
 JWT Glance automatically surfaces JWT expiration countdowns, algorithm details, and decoded claim cards directly within your editor—eliminating the insecure reflex of pasting sensitive credentials into third-party web decoders (`jwt.io`) and preventing cryptic `401 Unauthorized` test failures caused by stale fixtures.
 
@@ -24,7 +24,9 @@ JWT Glance automatically surfaces JWT expiration countdowns, algorithm details, 
 
 ---
 
-## 🔒 Security & Privacy Notice
+## 🔒 Security, Privacy & Safe Redaction
+
+![Safe Redacted Token Copy Demo](./images/RedactedCopy.gif)
 
 - **100% Offline & Private:** JWT Glance runs completely inside your local editor. It makes zero outbound network requests, collects zero telemetry/analytics, and never logs credentials.
 - **Decoding ≠ Verification:** Ambient decoding surfaces structural claims for developer convenience. **Decoding a JWT does not prove cryptographic authenticity.** Signatures must always be verified by your backend service against verified public keys or HMAC secrets.
@@ -47,12 +49,15 @@ JWT Glance automatically surfaces JWT expiration countdowns, algorithm details, 
 
 ## ⌨️ Command Palette Actions (`Cmd+Shift+P` / `Ctrl+Shift+P`)
 
+![Command Palette Inspection Workflow](./images/CmdShiftP.gif)
+
 | Command | Description |
 | :--- | :--- |
 | **`JWT Glance: Inspect Token at Cursor`** | Evaluates token under cursor or active text selection and opens the Action Palette. |
 | **`JWT Glance: Inspect Token from Clipboard`** | Reads and decodes a JWT straight from clipboard into memory without writing tokens to disk. |
 | **`JWT Glance: Copy Redacted Token`** | Copies a diagnostic copy of the token at cursor/clipboard with custom claims and signature redacted. |
 | **`JWT Glance: Toggle Ambient Lens`** | Instantly toggles ambient CodeLens and inline badges on or off. |
+
 
 ---
 

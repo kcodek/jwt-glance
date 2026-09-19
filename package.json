@@ -27,7 +27,6 @@
   "categories": [
     "Other"
   ],
-  "preview": true,
   "pricing": "Free",
   "engines": {
     "vscode": "^1.85.0",
