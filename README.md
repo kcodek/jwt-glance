@@ -1,6 +1,7 @@
 # JWT Glance
 
-> **Zero-click ambient JWT inspection lens for VS Code & Cursor.**
+> **Zero-click ambient JWT inspection lens for VS Code.**
+> *Compatible with VS Code-based editors through VSIX installation.*
 
 ![JWT Glance Ambient Lens Preview](./images/OpenDecodedToken.gif)
 

@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 concurrency:
   group: release-${{ github.ref }}
@@ -30,6 +31,7 @@ jobs:
         run: npm ci
 
       - name: Validate Tag Version Matches Package Manifest
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
           PKG_VERSION=$(node -p "require('./package.json').version")
@@ -51,22 +53,21 @@ jobs:
       - name: Validate VSIX Contents
         run: npx @vscode/vsce ls
 
-      - name: Verify VSCE_PAT Secret
+      - name: Publish to VS Code Marketplace
+        if: env.VSCE_PAT != ''
+        run: npx @vscode/vsce publish --packagePath *.vsix --pat "$VSCE_PAT"
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: |
-          if [ -z "$VSCE_PAT" ]; then
-            echo "Error: VSCE_PAT repository secret is required to publish releases to VS Code Marketplace."
-            exit 1
-          fi
 
-      - name: Publish to VS Code Marketplace
-        run: npx @vscode/vsce publish --packagePath *.vsix --pat "$VSCE_PAT"
+      - name: Skip Marketplace Notice
+        if: env.VSCE_PAT == ''
+        run: echo "::notice ::VSCE_PAT secret not configured. Skipping automated Marketplace publish (can be published manually or via portal)."
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           files: "*.vsix"
           generate_release_notes: true

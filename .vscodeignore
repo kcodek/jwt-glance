@@ -9,7 +9,6 @@ scripts/**
 out/**
 tsconfig*.json
 esbuild.js
-spec.md
 .gitignore
 .git/**
 **/*.map

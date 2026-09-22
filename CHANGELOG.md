@@ -5,7 +5,7 @@ All notable changes to the **JWT Glance** extension will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2026-09-15
+## [1.0.0] - 2026-09-21
 
 ### Added
 - **Ambient JWT Lens**: Instant, zero-click expiration countdown and subject glance rendered above (`position: top` via CodeLens) or inline (`position: left` via decoration).
@@ -21,6 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Viewport-restricted scanning for inline decoration mode.
   - Cancellation token support for long line scans in CodeLens.
 - **RFC 7519 Boundary Compliance**: Strict expiration handling at `now === exp` (`EXPIRED`).
-- **Interactive Action Palette**: QuickPick menu for one-click claim copying, zero-leak clipboard inspection, and opening decoded tokens in a JSON editor tab.
-- **Automated CI/CD & Verification**: GitHub Actions workflows on Node 20.x and 22.x, tag-based release packaging, Dependabot configuration, and 109-test automated test suite.
-
+- **Interactive Action Palette**: QuickPick menu for one-click claim copying, zero-leak clipboard inspection, and opening decoded tokens in a permanent JSON editor tab (`preview: false`).
+- **Visual Assets & Storefront**: High-framerate animated GIF demonstrations (`CmdShiftP.gif`, `OpenDecodedToken.gif`, `RedactedCopy.gif`) and 256x256 high-DPI icon asset.
+- **Automated CI/CD & Verification**: GitHub Actions workflows on Node 20.x and 22.x, resilient release packaging, Dependabot configuration, and 109-test automated test suite.

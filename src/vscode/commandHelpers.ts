@@ -110,7 +110,7 @@ export async function openDecodedTokenInEditor(
       language: 'json',
       content
     });
-    await vscodeRef.window.showTextDocument(doc, { preview: true });
+    await vscodeRef.window.showTextDocument(doc, { preview: false });
   }
 }
 

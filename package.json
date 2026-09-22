@@ -1,8 +1,9 @@
 {
   "name": "jwt-glance",
   "displayName": "JWT Glance",
-  "description": "Zero-click ambient JWT inspection lens for VS Code",
-  "version": "0.1.0",
+  "description": "Offline JWT decoder with ambient expiration status, CodeLens and secure claim inspection for VS Code",
+  "version": "1.0.0",
+  "preview": false,
   "publisher": "kcodek",
   "license": "MIT",
   "repository": {
@@ -16,13 +17,15 @@
   "icon": "images/icon.png",
   "keywords": [
     "jwt",
+    "jwt decoder",
+    "jwt glance",
+    "jwt inspector",
+    "jwt debugger",
     "json web token",
-    "authentication",
-    "oauth",
-    "oidc",
     "token decoder",
-    "security",
-    "keycloak"
+    "bearer token",
+    "codelens",
+    "offline"
   ],
   "categories": [
     "Other"

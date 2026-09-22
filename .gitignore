@@ -18,6 +18,7 @@ Thumbs.db
 
 # Agent scratch / internals
 .system_generated/
+.agents/
 
 
 # Environment files
