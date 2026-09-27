@@ -35,6 +35,7 @@ test('evaluateTemporal returns NOT_YET_ACTIVE when nbf is in future', () => {
   const result = evaluateTemporal(payload, NOW);
   assert.equal(result.temporalStatus, 'NOT_YET_ACTIVE');
   assert.equal(result.secondsUntilExpiration, 7200);
+  assert.equal(result.secondsUntilActivation, 300);
 });
 
 test('evaluateTemporal returns NO_EXPIRATION when exp is omitted', () => {

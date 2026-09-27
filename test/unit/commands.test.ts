@@ -173,3 +173,30 @@ test('extractClaimSummaries handles single string audience and omits absent clai
   assert.equal(summaries[1]?.name, 'Audience (aud)');
   assert.equal(summaries[1]?.value, 'single-client-app');
 });
+
+test('extractClaimSummaries includes keyId when present', () => {
+  const tokenWithKid: RecognizedToken = {
+    recognized: true,
+    algorithm: 'RS256',
+    keyId: 'rsa-signer-2026',
+    isUnsecured: false,
+    segmentCount: 3,
+    signature: { presence: 'PRESENT', verification: 'NOT_PERFORMED' },
+    temporalStatus: 'ACTIVE',
+    expiresAtIso: null,
+    secondsUntilExpiration: null,
+    issuedAtIso: null,
+    notBeforeIso: null,
+    issuer: null,
+    audience: null,
+    subject: 'service-worker',
+    roles: [],
+    warnings: []
+  };
+
+  const summaries = extractClaimSummaries(tokenWithKid);
+  const kidSummary = summaries.find((s) => s.name.includes('Key ID'));
+  assert.ok(kidSummary);
+  assert.equal(kidSummary.value, 'rsa-signer-2026');
+  assert.equal(kidSummary.icon, 'key');
+});

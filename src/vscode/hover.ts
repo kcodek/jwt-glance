@@ -37,9 +37,11 @@ export class JwtHoverProvider implements vscode.HoverProvider {
           payload = parsed.payload;
         }
 
-        const mdContent = formatHoverContent(assessment, payload);
+        const expiringSoonThreshold = config.get<number>('expiringSoonThreshold', 1800);
+        const mdContent = formatHoverContent(assessment, payload, { expiringSoonThreshold });
         const mdString = new vscode.MarkdownString(mdContent);
         mdString.isTrusted = false;
+        mdString.supportThemeIcons = true;
 
         const range = new vscode.Range(
           position.line,

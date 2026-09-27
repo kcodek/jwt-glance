@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { findCandidateTokens, assessToken } from '../core/index';
-import { formatBadgeLabel } from './badgeFormatter';
+import { formatCodeLensLabel } from './badgeFormatter';
 import { isDocumentEligible } from './filter';
 
 export class JwtCodeLensProvider implements vscode.CodeLensProvider {
@@ -18,11 +18,12 @@ export class JwtCodeLensProvider implements vscode.CodeLensProvider {
     const config = vscode.workspace.getConfiguration('jwtGlance');
     const position = config.get<string>('position', 'top');
 
-    if (position !== 'top' || !isDocumentEligible(document)) {
+    if ((position !== 'top' && position !== 'both') || !isDocumentEligible(document)) {
       return [];
     }
 
     const maxLineLength = config.get<number>('maxLineLength', 10000);
+    const expiringSoonThreshold = config.get<number>('expiringSoonThreshold', 1800);
     const codeLenses: vscode.CodeLens[] = [];
     const nowEpoch = Math.floor(Date.now() / 1000);
 
@@ -52,7 +53,7 @@ export class JwtCodeLensProvider implements vscode.CodeLensProvider {
             candidate.endIndex
           );
 
-          const badgeTitle = `$(key) ${formatBadgeLabel(assessment)}`;
+          const badgeTitle = formatCodeLensLabel(assessment, expiringSoonThreshold);
           codeLenses.push(
             new vscode.CodeLens(range, {
               title: badgeTitle,

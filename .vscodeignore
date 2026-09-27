@@ -16,6 +16,7 @@ esbuild.js
 images/*.svg
 CONTRIBUTING.md
 TODO.md
+docs/**
 node_modules/**
 
 

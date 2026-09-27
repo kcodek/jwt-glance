@@ -15,7 +15,8 @@ export type TemporalWarning =
 export type VerificationStatus =
   | 'NOT_PERFORMED'
   | 'VERIFIED'
-  | 'FAILED';
+  | 'FAILED'
+  | 'KEY_NOT_FOUND';
 
 export type SignaturePresence =
   | 'PRESENT'
@@ -23,13 +24,23 @@ export type SignaturePresence =
   | 'ABSENT'
   | 'UNEXPECTED';
 
+export type PolicyStatus =
+  | 'MATCH'
+  | 'MISMATCH'
+  | 'UNCHECKED';
+
 export type StructuralWarning =
   | 'SIGNATURE_MISSING'
   | 'UNEXPECTED_SIGNATURE'
   | 'UNSECURED_ALG_NONE'
   | 'TWO_SEGMENT_INSPECTION';
 
-export type TokenWarning = TemporalWarning | StructuralWarning;
+export type PolicyWarning =
+  | 'ISSUER_MISMATCH'
+  | 'AUDIENCE_MISMATCH'
+  | 'EXPIRATION_REQUIRED';
+
+export type TokenWarning = TemporalWarning | StructuralWarning | PolicyWarning;
 
 export interface UnrecognizedToken {
   recognized: false;
@@ -38,24 +49,51 @@ export interface UnrecognizedToken {
 
 export interface RecognizedToken {
   recognized: true;
-  algorithm: string;
-  isUnsecured: boolean; // true if alg === 'none'
-  segmentCount: 2 | 3;
+  recognition?: {
+    recognized: true;
+    format: 'JWT' | 'JWS';
+  };
   signature: {
     presence: SignaturePresence;
     verification: VerificationStatus;
+    algorithm?: string;
+    keyId?: string;
   };
+  temporal?: {
+    status: TemporalStatus;
+    expiresAtIso: string | null;
+    secondsUntilExpiration: number | null; // positive = future, 0 = now, negative = past, null = none/indeterminate
+    secondsUntilActivation?: number | null; // positive = future activation, null = none/active/indeterminate
+    issuedAtIso: string | null;
+    notBeforeIso: string | null;
+  };
+  policy?: {
+    issuer: PolicyStatus;
+    audience: PolicyStatus;
+  };
+  claims?: {
+    subject: string | null;
+    issuer: string | null;
+    audience: string | string[] | null;
+    roles: string[];
+  };
+  warnings: TokenWarning[];
+
+  // Top-level convenience properties (guarantee backwards compatibility across callers):
+  algorithm: string;
+  isUnsecured: boolean; // true if alg === 'none'
+  segmentCount: 2 | 3;
   temporalStatus: TemporalStatus;
   expiresAtIso: string | null;
-  secondsUntilExpiration: number | null; // positive = future, 0 = now, negative = past, null = none/indeterminate
+  secondsUntilExpiration: number | null;
+  secondsUntilActivation?: number | null;
   issuedAtIso: string | null;
   notBeforeIso: string | null;
   issuer: string | null;
   audience: string | string[] | null;
   subject: string | null;
   roles: string[];
-  warnings: TokenWarning[];
+  keyId?: string;
 }
 
 export type TokenAssessment = UnrecognizedToken | RecognizedToken;
-

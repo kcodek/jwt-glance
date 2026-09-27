@@ -5,7 +5,7 @@ Thank you for your interest in contributing to JWT Glance!
 ## Development Setup
 
 Requirements:
-- Node.js >= 20.0.0
+- Node.js >= 18.0.0 (Node 20+ recommended)
 - npm >= 9.0.0
 
 ```bash

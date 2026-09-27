@@ -2,7 +2,7 @@
   "name": "jwt-glance",
   "displayName": "JWT Glance",
   "description": "Offline JWT decoder with ambient expiration status, CodeLens and secure claim inspection for VS Code",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "preview": false,
   "publisher": "kcodek",
   "license": "MIT",
@@ -33,7 +33,7 @@
   "pricing": "Free",
   "engines": {
     "vscode": "^1.85.0",
-    "node": ">=20.0.0"
+    "node": ">=18.0.0"
   },
   "main": "./dist/extension.js",
   "activationEvents": [
@@ -56,10 +56,6 @@
       {
         "command": "jwtGlance.toggleEnabled",
         "title": "JWT Glance: Toggle Ambient Lens"
-      },
-      {
-        "command": "jwtGlance.inspectToken",
-        "title": "JWT Glance: Inspect Credential"
       }
     ],
     "configuration": {
@@ -72,9 +68,24 @@
         },
         "jwtGlance.position": {
           "type": "string",
-          "enum": ["top", "left"],
+          "enum": ["top", "left", "both"],
           "default": "top",
-          "description": "Where to render the JWT glance badge: 'top' (CodeLens above the line) or 'left' (inline badge before token)."
+          "description": "Where to render the JWT glance badge: 'top' (CodeLens above the line), 'left' (inline color chip before token), or 'both' (CodeLens and inline color chip)."
+        },
+        "jwtGlance.overviewRuler": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display color-coded health indicators for JWT tokens in the editor scrollbar overview ruler."
+        },
+        "jwtGlance.dimExpiredTokens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Subtly dim expired JWT token text in the editor to visually distinguish active vs dead credentials."
+        },
+        "jwtGlance.expiringSoonThreshold": {
+          "type": "number",
+          "default": 1800,
+          "description": "Threshold in seconds (default 1800s / 30m) under which an active token is flagged with an amber 'Expiring Soon' warning."
         },
         "jwtGlance.maxLineLength": {
           "type": "number",
@@ -125,7 +136,7 @@
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.13.9",
-    "@types/vscode": "^1.85.0",
+    "@types/vscode": "~1.85.0",
     "@vscode/vsce": "^3.2.1",
     "esbuild": "^0.25.0",
     "typescript": "^5.7.3"

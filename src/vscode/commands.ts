@@ -45,47 +45,11 @@ export async function showJwtActionPalette(
     },
     {
       label: '$(json) Open Decoded Token in New Editor',
-      description: 'View full formatted header and payload JSON in a dedicated editor tab',
+      description: 'View full formatted header and payload JSON in a dedicated tab',
       action: async () => {
         await openDecodedTokenInEditor(rawToken, assessment, vscode);
       }
-    },
-    {
-      label: '$(clippy) Decoded Payload JSON',
-      description: 'Formatted payload claims',
-      buttons: [copyButton],
-      action: async () => {
-        const parsed = parseJwt(rawToken);
-        if (!('reason' in parsed)) {
-          await vscode.env.clipboard.writeText(JSON.stringify(parsed.payload, null, 2));
-          vscode.window.showInformationMessage('JWT Glance: Decoded payload copied to clipboard.');
-        }
-      }
-    },
-    {
-      label: '$(shield) Copy Redacted Token (Redacts Custom Claims)',
-      description: 'Diagnostic token preserving standard timing/headers with custom claims and signature redacted. Invalid for auth.',
-      buttons: [copyButton],
-      action: async () => {
-        const redaction = createRedactedJwt(rawToken);
-        if (redaction.success) {
-          await vscode.env.clipboard.writeText(redaction.token);
-          vscode.window.showInformationMessage('JWT Glance: Redacted diagnostic token copied to clipboard.');
-        } else {
-          vscode.window.showErrorMessage(`JWT Glance: Failed to redact token: ${redaction.reason}`);
-        }
-      }
-    },
-    {
-      label: '$(key) Raw Token',
-      description: 'Candidate token string',
-      buttons: [copyButton],
-      action: async () => {
-        await vscode.env.clipboard.writeText(rawToken);
-        vscode.window.showInformationMessage('JWT Glance: Raw token copied to clipboard.');
-      }
     }
-
   ];
 
   const claimSummaries = extractClaimSummaries(assessment);
@@ -107,9 +71,42 @@ export async function showJwtActionPalette(
     }
   }
 
+  items.push(
+    {
+      label: 'Export & Diagnostics',
+      kind: vscode.QuickPickItemKind.Separator
+    },
+    {
+      label: '$(clippy) Copy Decoded Payload (JSON)',
+      description: 'Formatted payload claims JSON',
+      buttons: [copyButton],
+      action: async () => {
+        const parsed = parseJwt(rawToken);
+        if (!('reason' in parsed)) {
+          await vscode.env.clipboard.writeText(JSON.stringify(parsed.payload, null, 2));
+          vscode.window.showInformationMessage('JWT Glance: Decoded payload copied to clipboard.');
+        }
+      }
+    },
+    {
+      label: '$(shield) Copy Redacted Diagnostic Token',
+      description: 'Safe for sharing — preserves timing/headers with sensitive claims & signature redacted',
+      buttons: [copyButton],
+      action: async () => {
+        const redaction = createRedactedJwt(rawToken);
+        if (redaction.success) {
+          await vscode.env.clipboard.writeText(redaction.token);
+          vscode.window.showInformationMessage('JWT Glance: Redacted diagnostic token copied to clipboard.');
+        } else {
+          vscode.window.showErrorMessage(`JWT Glance: Failed to redact token: ${redaction.reason}`);
+        }
+      }
+    }
+  );
+
   return new Promise<void>((resolve) => {
     const qp = vscode.window.createQuickPick<JwtActionItem>();
-    qp.title = `JWT Glance: [${formatBadgeLabel(assessment)}]`;
+    qp.title = `JWT Glance: ${formatBadgeLabel(assessment, { omitPrefix: true })}`;
     qp.placeholder = 'Select an action or click copy on any claim';
     qp.items = items;
 

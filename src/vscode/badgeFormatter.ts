@@ -1,4 +1,5 @@
 import type { RecognizedToken } from '../core/types';
+import { getTokenSemanticTier, getSemanticCodicon } from './semanticTier';
 
 export function formatRelativeDuration(seconds: number): string {
   const abs = Math.abs(seconds);
@@ -15,20 +16,35 @@ export function formatRelativeDuration(seconds: number): string {
     return remainingMins > 0 ? `${hours}h ${remainingMins}m` : `${hours}h`;
   }
   const days = Math.floor(hours / 24);
-  return `${days}d`;
+  if (days < 365) {
+    return `${days}d`;
+  }
+  const years = Math.floor(days / 365);
+  return `${years}y`;
 }
 
-export function formatBadgeLabel(token: RecognizedToken): string {
+export interface BadgeFormatOptions {
+  showUncheckedStatus?: boolean;
+  omitPrefix?: boolean;
+}
+
+export function formatBadgeLabel(
+  token: RecognizedToken,
+  options?: BadgeFormatOptions
+): string {
   let statusText = '';
-  switch (token.temporalStatus) {
+  const temporalStatus = token.temporal?.status ?? token.temporalStatus;
+  const secondsLeft = token.temporal?.secondsUntilExpiration ?? token.secondsUntilExpiration;
+
+  switch (temporalStatus) {
     case 'ACTIVE':
-      statusText = token.secondsUntilExpiration !== null
-        ? `Active ${formatRelativeDuration(token.secondsUntilExpiration)}`
+      statusText = secondsLeft !== null
+        ? `Active ${formatRelativeDuration(secondsLeft)}`
         : 'Active';
       break;
     case 'EXPIRED':
-      statusText = token.secondsUntilExpiration !== null
-        ? `Expired ${formatRelativeDuration(token.secondsUntilExpiration)}`
+      statusText = secondsLeft !== null
+        ? `Expired ${formatRelativeDuration(secondsLeft)}`
         : 'Expired';
       break;
     case 'NOT_YET_ACTIVE':
@@ -43,20 +59,55 @@ export function formatBadgeLabel(token: RecognizedToken): string {
       break;
   }
 
-  const parts: string[] = ['JWT'];
+  const parts: string[] = options?.omitPrefix ? [] : ['JWT'];
 
-  if (token.isUnsecured) {
+  // Signature dimension
+  const sig = token.signature;
+  const algorithm = sig?.algorithm || token.algorithm;
+
+  if (sig?.verification === 'FAILED') {
+    parts.push('✕ BAD SIGNATURE');
+  } else if (sig?.verification === 'VERIFIED') {
+    parts.push(`${algorithm} ✓`);
+  } else if (sig?.verification === 'KEY_NOT_FOUND') {
+    parts.push('? Key Not Found');
+  } else if (token.isUnsecured) {
     parts.push('UNSECURED alg:none');
-  } else if (token.signature?.presence === 'ABSENT' || token.signature?.presence === 'EMPTY') {
-    parts.push(`${token.algorithm} NO SIG ⚠️`);
+  } else if (sig?.presence === 'ABSENT' || sig?.presence === 'EMPTY') {
+    parts.push(`${algorithm} NO SIG ⚠️`);
+  } else if (options?.showUncheckedStatus) {
+    parts.push(`${algorithm} ? Unchecked`);
   }
 
-
-  if (token.subject && token.subject.trim().length > 0) {
-    parts.push(token.subject.trim());
+  // Policy dimension
+  if (token.policy?.audience === 'MISMATCH') {
+    parts.push('AUD mismatch');
+  }
+  if (token.policy?.issuer === 'MISMATCH') {
+    parts.push('ISS mismatch');
   }
 
-  parts.push(statusText);
+  const subject = token.claims?.subject ?? token.subject;
+  if (subject && subject.trim().length > 0) {
+    parts.push(subject.trim());
+  }
+
+  // Only append temporal status if signature didn't fail
+  if (sig?.verification !== 'FAILED') {
+    parts.push(statusText);
+  }
 
   return parts.join(' · ');
+}
+
+export function formatCodeLensLabel(token: RecognizedToken, expiringSoonSeconds = 1800): string {
+  const tier = getTokenSemanticTier(token, expiringSoonSeconds);
+  let icon = getSemanticCodicon(tier);
+  if (token.signature?.verification === 'VERIFIED') {
+    icon = '$(pass-filled)';
+  } else if (token.signature?.verification === 'FAILED') {
+    icon = '$(error)';
+  }
+  const label = formatBadgeLabel(token);
+  return `${icon} ${label}`;
 }

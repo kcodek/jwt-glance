@@ -96,26 +96,55 @@ export function assessToken(
   }
 
   const roles = extractRoles(payload);
+  const keyId = typeof header['kid'] === 'string' ? header['kid'] : undefined;
 
   const recognized: RecognizedToken = {
     recognized: true,
+    recognition: {
+      recognized: true,
+      format: 'JWT'
+    },
+    signature: {
+      presence: signaturePresence,
+      verification: 'NOT_PERFORMED',
+      algorithm,
+      ...(keyId !== undefined ? { keyId } : {})
+    },
+    temporal: {
+      status: temporal.temporalStatus,
+      expiresAtIso: temporal.expiresAtIso,
+      secondsUntilExpiration: temporal.secondsUntilExpiration,
+      secondsUntilActivation: temporal.secondsUntilActivation,
+      issuedAtIso: temporal.issuedAtIso,
+      notBeforeIso: temporal.notBeforeIso
+    },
+    policy: {
+      issuer: 'UNCHECKED',
+      audience: 'UNCHECKED'
+    },
+    claims: {
+      subject,
+      issuer,
+      audience,
+      roles
+    },
+    warnings,
+
+    // Top-level convenience properties
     algorithm,
     isUnsecured,
     segmentCount: parsed.segmentCount,
-    signature: {
-      presence: signaturePresence,
-      verification: 'NOT_PERFORMED'
-    },
     temporalStatus: temporal.temporalStatus,
     expiresAtIso: temporal.expiresAtIso,
     secondsUntilExpiration: temporal.secondsUntilExpiration,
+    secondsUntilActivation: temporal.secondsUntilActivation,
     issuedAtIso: temporal.issuedAtIso,
     notBeforeIso: temporal.notBeforeIso,
     issuer,
     audience,
     subject,
     roles,
-    warnings
+    keyId
   };
 
   return recognized;

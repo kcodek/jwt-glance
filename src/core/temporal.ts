@@ -4,6 +4,7 @@ export interface TemporalEvaluation {
   temporalStatus: TemporalStatus;
   expiresAtIso: string | null;
   secondsUntilExpiration: number | null;
+  secondsUntilActivation: number | null;
   issuedAtIso: string | null;
   notBeforeIso: string | null;
   warnings: TemporalWarning[];
@@ -74,11 +75,13 @@ export function evaluateTemporal(
 
   let temporalStatus: TemporalStatus;
   let secondsUntilExpiration: number | null = null;
+  let secondsUntilActivation: number | null = null;
 
   if (isIndeterminate) {
     temporalStatus = 'INDETERMINATE';
   } else if (nbf !== null && nbf > referenceEpochSeconds) {
     temporalStatus = 'NOT_YET_ACTIVE';
+    secondsUntilActivation = nbf - referenceEpochSeconds;
     if (exp !== null) {
       secondsUntilExpiration = exp - referenceEpochSeconds;
     }
@@ -97,6 +100,7 @@ export function evaluateTemporal(
     temporalStatus,
     expiresAtIso: toIsoString(exp),
     secondsUntilExpiration,
+    secondsUntilActivation,
     issuedAtIso: toIsoString(iat),
     notBeforeIso: toIsoString(nbf),
     warnings

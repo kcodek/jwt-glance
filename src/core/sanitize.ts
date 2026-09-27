@@ -10,6 +10,21 @@ export function sanitizeMarkdown(input: unknown): string {
   return str.replace(MD_CHAR_REGEX, '\\$1');
 }
 
+/**
+ * Sanitizes untrusted text for inclusion inside an inline Markdown code span (`...`).
+ * In CommonMark/Markdown, backslashes do not escape backticks inside code spans;
+ * any backtick terminates the code span regardless of preceding backslashes.
+ * Strips backticks, carriage returns, and newlines to guarantee that untrusted input
+ * cannot break out of inline code spans.
+ */
+export function sanitizeCodeSpan(input: unknown): string {
+  if (input === null || input === undefined) {
+    return '';
+  }
+  const str = typeof input === 'string' ? input : String(input);
+  return str.replace(/[`\r\n]/g, '');
+}
+
 export const SAFE_HEADER_CLAIMS = new Set(['alg', 'typ', 'cty']);
 export const SAFE_PAYLOAD_CLAIMS = new Set(['exp', 'nbf', 'iat']);
 

@@ -32,6 +32,10 @@ export function extractClaimSummaries(assessment: RecognizedToken): ClaimSummary
   if (assessment.expiresAtIso) {
     summaries.push({ icon: 'clock', name: 'Expiration (exp)', value: assessment.expiresAtIso });
   }
+  const kid = assessment.signature?.keyId ?? assessment.keyId;
+  if (kid) {
+    summaries.push({ icon: 'key', name: 'Key ID (kid)', value: kid });
+  }
   return summaries;
 }
 
