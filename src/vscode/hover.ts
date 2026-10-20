@@ -1,7 +1,16 @@
 import * as vscode from 'vscode';
-import { findCandidateTokens, assessToken, parseJwt } from '../core/index';
+import {
+  findCandidateTokens,
+  assessToken,
+  parseJwt,
+  evaluatePolicy,
+  type JwtWorkspacePolicy,
+  type PolicyDiagnostic
+} from '../core/index';
 import { formatHoverContent } from './hoverFormatter';
 import { isDocumentEligible } from './filter';
+import { shouldApplyPolicyToFile } from './diagnostics';
+import { getJwtGlanceSetting } from './configHelper';
 
 export class JwtHoverProvider implements vscode.HoverProvider {
   public provideHover(
@@ -13,9 +22,8 @@ export class JwtHoverProvider implements vscode.HoverProvider {
       return null;
     }
 
-    const config = vscode.workspace.getConfiguration('jwtGlance');
     const line = document.lineAt(position.line);
-    const maxLineLength = config.get<number>('maxLineLength', 10000);
+    const maxLineLength = getJwtGlanceSetting<number>('maxLineLength', 10000);
     if (line.text.length > maxLineLength) {
       return null;
     }
@@ -37,8 +45,22 @@ export class JwtHoverProvider implements vscode.HoverProvider {
           payload = parsed.payload;
         }
 
-        const expiringSoonThreshold = config.get<number>('expiringSoonThreshold', 1800);
-        const mdContent = formatHoverContent(assessment, payload, { expiringSoonThreshold });
+        const expiringSoonThreshold = getJwtGlanceSetting<number>('expiringSoonThreshold', 1800);
+        const policies = getJwtGlanceSetting<JwtWorkspacePolicy[]>('policies', []);
+        let policyDiagnostics: PolicyDiagnostic[] | undefined;
+
+        if (policies && policies.length > 0) {
+          const filePath = document.uri.fsPath || document.uri.path || document.uri.toString();
+          const applicable = policies.filter(p => shouldApplyPolicyToFile(filePath, p));
+          if (applicable.length > 0) {
+            policyDiagnostics = [];
+            for (const p of applicable) {
+              policyDiagnostics.push(...evaluatePolicy(assessment, p, nowEpoch));
+            }
+          }
+        }
+
+        const mdContent = formatHoverContent(assessment, payload, { expiringSoonThreshold, policyDiagnostics });
         const mdString = new vscode.MarkdownString(mdContent);
         mdString.isTrusted = false;
         mdString.supportThemeIcons = true;

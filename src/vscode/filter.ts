@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { isEligible, FilterConfig } from '../core/index';
+import { getJwtGlanceSetting } from './configHelper';
 
 export * from '../core/filter';
 
@@ -8,12 +9,11 @@ export function isDocumentEligible(document: vscode.TextDocument): boolean {
     return false;
   }
 
-  const vsConfig = vscode.workspace.getConfiguration('jwtGlance');
   const config: FilterConfig = {
-    enabled: vsConfig.get<boolean>('enabled', true),
-    languages: vsConfig.get<string[]>('languages', ['*']),
-    maxDocumentCharacters: vsConfig.get<number>('maxDocumentCharacters', 524288),
-    exclude: vsConfig.get<string[]>('exclude', [
+    enabled: getJwtGlanceSetting<boolean>('enabled', true),
+    languages: getJwtGlanceSetting<string[]>('languages', ['*']),
+    maxDocumentCharacters: getJwtGlanceSetting<number>('maxDocumentCharacters', 524288),
+    exclude: getJwtGlanceSetting<string[]>('exclude', [
       '**/package-lock.json',
       '**/pnpm-lock.yaml',
       '**/*.min.*',

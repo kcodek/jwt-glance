@@ -353,3 +353,125 @@ test('exact threshold boundaries: 1800s vs 1801s and exp === now', () => {
   assert.equal(getTokenSemanticTier(malformedExpToken, 1800), 'INDETERMINATE');
 });
 
+test('formatBadgeLabel respects strict claim choices without leaking subject fallback', () => {
+  const token: RecognizedToken = {
+    recognized: true,
+    algorithm: 'HS256',
+    isUnsecured: false,
+    segmentCount: 3,
+    signature: { presence: 'PRESENT', verification: 'NOT_PERFORMED' },
+    temporalStatus: 'ACTIVE',
+    expiresAtIso: '2026-09-10T14:00:00.000Z',
+    secondsUntilExpiration: 2520, // 42m
+    issuedAtIso: null,
+    notBeforeIso: null,
+    issuer: null,
+    audience: null,
+    subject: 'user-42',
+    roles: [],
+    warnings: [],
+    payload: {
+      sub: 'user-42'
+      // note: no 'roles' claim in payload
+    }
+  };
+
+  // 1. Strict choice: glanceClaims is ['roles'] and 'sub' is omitted
+  // Token lacks 'roles', so badge must NOT display 'user-42'
+  const strictBadge = formatBadgeLabel(token, { glanceClaims: ['roles'] });
+  assert.equal(strictBadge, 'JWT · Active 42m');
+  assert.ok(!strictBadge.includes('user-42'));
+
+  // 2. Choice with fallback: glanceClaims is ['roles', 'sub']
+  // Token lacks 'roles', so badge should fall back to 'user-42'
+  const fallbackBadge = formatBadgeLabel(token, { glanceClaims: ['roles', 'sub'] });
+  assert.equal(fallbackBadge, 'JWT · user-42 · Active 42m');
+
+  // 3. Strict choice matches: payload has roles
+  const tokenWithRoles: RecognizedToken = {
+    ...token,
+    payload: {
+      sub: 'user-42',
+      roles: ['admin', 'billing']
+    }
+  };
+  const matchedBadge = formatBadgeLabel(tokenWithRoles, { glanceClaims: ['roles'] });
+  assert.equal(matchedBadge, 'JWT · admin, billing · Active 42m');
+});
+
+test('formatBadgeLabel displays three fields by default when token contains multiple claims', () => {
+  const token: RecognizedToken = {
+    recognized: true,
+    algorithm: 'HS256',
+    isUnsecured: false,
+    segmentCount: 3,
+    signature: { presence: 'PRESENT', verification: 'NOT_PERFORMED' },
+    temporalStatus: 'ACTIVE',
+    expiresAtIso: '2026-09-10T14:00:00.000Z',
+    secondsUntilExpiration: 2520,
+    issuedAtIso: null,
+    notBeforeIso: null,
+    issuer: null,
+    audience: null,
+    subject: 'alice@example.com',
+    roles: ['admin', 'developer'],
+    warnings: [],
+    payload: {
+      sub: 'alice@example.com',
+      name: 'Alice Smith',
+      roles: ['admin', 'developer']
+    }
+  };
+
+  const badge = formatBadgeLabel(token, {
+    glanceClaims: ['roles', 'name', 'email', 'sub'],
+    maxGlanceClaims: 3
+  });
+
+  // All 3 fields (roles, name, sub) are rendered in the glance!
+  assert.equal(badge, 'JWT · admin, developer · Alice Smith · alice@example.com · Active 42m');
+
+  // CodeLens also displays all three fields
+  const lens = formatCodeLensLabel(token, 1800, ['roles', 'name', 'email', 'sub'], 3);
+  assert.equal(lens, '$(pass-filled) JWT · admin, developer · Alice Smith · alice@example.com · Active 42m');
+});
+
+test('formatBadgeLabel respects maxGlanceClaims when fewer than 3 claims are requested', () => {
+  const token: RecognizedToken = {
+    recognized: true,
+    algorithm: 'HS256',
+    isUnsecured: false,
+    segmentCount: 3,
+    signature: { presence: 'PRESENT', verification: 'NOT_PERFORMED' },
+    temporalStatus: 'ACTIVE',
+    expiresAtIso: '2026-09-10T14:00:00.000Z',
+    secondsUntilExpiration: 2520,
+    issuedAtIso: null,
+    notBeforeIso: null,
+    issuer: null,
+    audience: null,
+    subject: 'alice@example.com',
+    roles: [],
+    warnings: [],
+    payload: {
+      sub: 'alice@example.com',
+      name: 'Alice Smith',
+      roles: ['admin', 'developer']
+    }
+  };
+
+  const badge1 = formatBadgeLabel(token, {
+    glanceClaims: ['roles', 'name', 'sub'],
+    maxGlanceClaims: 1
+  });
+  assert.equal(badge1, 'JWT · admin, developer · Active 42m');
+
+  const badge2 = formatBadgeLabel(token, {
+    glanceClaims: ['roles', 'name', 'sub'],
+    maxGlanceClaims: 2
+  });
+  assert.equal(badge2, 'JWT · admin, developer · Alice Smith · Active 42m');
+});
+
+
+

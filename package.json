@@ -2,7 +2,7 @@
   "name": "jwt-glance",
   "displayName": "JWT Glance",
   "description": "Offline JWT decoder with ambient expiration status, CodeLens and secure claim inspection for VS Code",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "preview": false,
   "publisher": "kcodek",
   "license": "MIT",
@@ -46,6 +46,10 @@
         "title": "JWT Glance: Inspect Token at Cursor"
       },
       {
+        "command": "jwtGlance.copyBearerToken",
+        "title": "JWT Glance: Copy as Authorization: Bearer Header"
+      },
+      {
         "command": "jwtGlance.inspectFromClipboard",
         "title": "JWT Glance: Inspect Token from Clipboard"
       },
@@ -56,67 +60,191 @@
       {
         "command": "jwtGlance.toggleEnabled",
         "title": "JWT Glance: Toggle Ambient Lens"
+      },
+      {
+        "command": "jwtGlance.chooseGlanceClaim",
+        "title": "JWT Glance: Choose Claim for Badge Display"
       }
     ],
+    "icons": {
+      "jwt-glance": {
+        "description": "JWT Glance Koala Logo",
+        "default": {
+          "fontPath": "./icons/jwt-glance.woff",
+          "fontCharacter": "\\ea01"
+        }
+      },
+      "jwt-glance-paused": {
+        "description": "JWT Glance Koala Logo (paused)",
+        "default": {
+          "fontPath": "./icons/jwt-glance.woff",
+          "fontCharacter": "\\ea02"
+        }
+      }
+    },
     "configuration": {
       "title": "JWT Glance",
       "properties": {
-        "jwtGlance.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable or disable JWT Glance ambient inspection."
-        },
-        "jwtGlance.position": {
-          "type": "string",
-          "enum": ["top", "left", "both"],
-          "default": "top",
-          "description": "Where to render the JWT glance badge: 'top' (CodeLens above the line), 'left' (inline color chip before token), or 'both' (CodeLens and inline color chip)."
-        },
-        "jwtGlance.overviewRuler": {
-          "type": "boolean",
-          "default": true,
-          "description": "Display color-coded health indicators for JWT tokens in the editor scrollbar overview ruler."
-        },
-        "jwtGlance.dimExpiredTokens": {
-          "type": "boolean",
-          "default": true,
-          "description": "Subtly dim expired JWT token text in the editor to visually distinguish active vs dead credentials."
-        },
-        "jwtGlance.expiringSoonThreshold": {
-          "type": "number",
-          "default": 1800,
-          "description": "Threshold in seconds (default 1800s / 30m) under which an active token is flagged with an amber 'Expiring Soon' warning."
-        },
-        "jwtGlance.maxLineLength": {
-          "type": "number",
-          "default": 10000,
-          "description": "Maximum line length to scan for candidate JWTs."
-        },
-        "jwtGlance.maxDocumentCharacters": {
-          "type": "number",
-          "default": 524288,
-          "description": "Maximum document character count to scan (default 524,288 characters, ~512 KB). Documents exceeding this limit are skipped to maintain editor responsiveness."
-        },
-        "jwtGlance.exclude": {
-          "type": "array",
-          "items": {
-            "type": "string"
+        "jwtGlance": {
+          "type": "object",
+          "description": "JWT Glance configuration settings.",
+          "default": {
+            "enabled": true,
+            "showStatusBarItem": true,
+            "glanceClaims": ["roles", "name", "email", "sub"],
+            "maxGlanceClaims": 3,
+            "position": "top",
+            "overviewRuler": true,
+            "maxOverviewRulerTokens": 50,
+            "dimExpiredTokens": true,
+            "expiringSoonThreshold": 1800,
+            "maxLineLength": 10000,
+            "maxDocumentCharacters": 524288,
+            "exclude": [
+              "**/package-lock.json",
+              "**/yarn.lock",
+              "**/pnpm-lock.yaml",
+              "**/*.min.*",
+              "**/*.map"
+            ],
+            "languages": ["*"],
+            "policies": []
           },
-          "default": [
-            "**/package-lock.json",
-            "**/pnpm-lock.yaml",
-            "**/*.min.*",
-            "**/*.map"
-          ],
-          "description": "Glob patterns of files and directories to exclude from ambient scanning."
-        },
-        "jwtGlance.languages": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": ["*"],
-          "description": "List of language identifiers to scan for JWTs (use ['*'] for all languages)."
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable or disable JWT Glance ambient inspection."
+            },
+            "showStatusBarItem": {
+              "type": "boolean",
+              "default": true,
+              "description": "Display a toggle icon for JWT Glance in the VS Code status bar footer."
+            },
+            "glanceClaims": {
+              "type": ["array", "string"],
+              "items": {
+                "type": "string"
+              },
+              "default": ["roles", "name", "email", "sub"],
+              "description": "Claim keys in the JWT payload to display in the glance badge and CodeLens in priority order (e.g. ['roles', 'name', 'email', 'sub']). Displays up to maxGlanceClaims existing non-empty claims."
+            },
+            "maxGlanceClaims": {
+              "type": "number",
+              "default": 3,
+              "minimum": 1,
+              "maximum": 10,
+              "description": "Maximum number of claim fields to display simultaneously in ambient glance badges and CodeLens (default: 3)."
+            },
+            "position": {
+              "type": "string",
+              "enum": ["top", "left", "both"],
+              "default": "top",
+              "description": "Where to render the JWT glance badge: 'top' (CodeLens above the line), 'left' (inline colored text before token), or 'both' (CodeLens and inline colored text)."
+            },
+            "overviewRuler": {
+              "type": "boolean",
+              "default": true,
+              "description": "Display color-coded health indicators for JWT tokens in the editor scrollbar overview ruler."
+            },
+            "maxOverviewRulerTokens": {
+              "type": "number",
+              "default": 50,
+              "minimum": 0,
+              "description": "Maximum number of JWT tokens in a single document to display in the scrollbar overview ruler (set to 0 to disable scrollbar markers; does not restrict candidate token scanning)."
+            },
+            "dimExpiredTokens": {
+              "type": "boolean",
+              "default": true,
+              "description": "Subtly dim expired JWT token text in the editor to visually distinguish active vs dead credentials."
+            },
+            "expiringSoonThreshold": {
+              "type": "number",
+              "default": 1800,
+              "description": "Threshold in seconds (default 1800s / 30m) under which an active token is flagged with an amber 'Expiring Soon' warning."
+            },
+            "maxLineLength": {
+              "type": "number",
+              "default": 10000,
+              "description": "Maximum line length to scan for candidate JWTs."
+            },
+            "maxDocumentCharacters": {
+              "type": "number",
+              "default": 524288,
+              "description": "Maximum document character count to scan (default 524,288 characters, ~512 KB). Documents exceeding this limit are skipped to maintain editor responsiveness."
+            },
+            "exclude": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "**/package-lock.json",
+                "**/yarn.lock",
+                "**/pnpm-lock.yaml",
+                "**/*.min.*",
+                "**/*.map"
+              ],
+              "description": "Glob patterns of files and directories to exclude from ambient scanning."
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": ["*"],
+              "description": "List of language identifiers to scan for JWTs (use ['*'] for all languages)."
+            },
+            "policies": {
+              "type": "array",
+              "default": [],
+              "description": "Opt-in workspace JWT conformance policies for local validation against expected issuers, audiences, and algorithms.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Descriptive name for this policy (e.g. 'Production Auth')."
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "default": ["**/*.http", "**/.env*"],
+                    "description": "Glob patterns of files where this policy applies."
+                  },
+                  "issuer": {
+                    "type": "string",
+                    "description": "Expected 'iss' claim value."
+                  },
+                  "audience": {
+                    "type": ["string", "array"],
+                    "items": { "type": "string" },
+                    "description": "Expected 'aud' claim value or list of accepted audiences."
+                  },
+                  "allowedAlgorithms": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Allowlist of permitted algorithms (e.g. ['RS256', 'ES256'])."
+                  },
+                  "requiredClaims": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Claims that must be present in every token (e.g. ['sub', 'exp'])."
+                  },
+                  "maximumTokenAgeSeconds": {
+                    "type": "number",
+                    "description": "Maximum permitted age in seconds from issued-at ('iat') to current time."
+                  },
+                  "requireExpiration": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether tokens must include an 'exp' claim."
+                  }
+                },
+                "required": ["name"]
+              }
+            }
+          }
         }
       }
     }

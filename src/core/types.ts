@@ -49,6 +49,7 @@ export interface UnrecognizedToken {
 
 export interface RecognizedToken {
   recognized: true;
+  payload?: Record<string, unknown>;
   recognition?: {
     recognized: true;
     format: 'JWT' | 'JWS';

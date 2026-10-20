@@ -1,10 +1,12 @@
 import type { RecognizedToken } from '../core/types';
-import { sanitizeCodeSpan } from '../core/sanitize';
+import type { PolicyDiagnostic } from '../core/policy';
+import { sanitizeCodeSpan, sanitizeMarkdown } from '../core/sanitize';
 import { formatRelativeDuration } from './badgeFormatter';
 import { getTokenSemanticTier } from './semanticTier';
 
 export interface HoverFormatOptions {
   expiringSoonThreshold?: number;
+  policyDiagnostics?: PolicyDiagnostic[];
 }
 
 export function getSafeCodeFence(content: string): string {
@@ -142,7 +144,16 @@ export function formatHoverContent(
     lines.push('⚠️ **Warnings:** ' + token.warnings.map(w => `\`${w}\``).join(', '));
   }
 
-  // 5. Decoded Payload JSON (Dynamic Code Fence) with Section Dividers
+  // 5. Policy Alerts (if any)
+  if (options?.policyDiagnostics && options.policyDiagnostics.length > 0) {
+    lines.push('');
+    const alerts = options.policyDiagnostics.map(
+      d => `\`${sanitizeCodeSpan(d.code)}\`: ${sanitizeMarkdown(d.message)}`
+    );
+    lines.push('⚠️ **Policy Alerts:**\n- ' + alerts.join('\n- '));
+  }
+
+  // 6. Decoded Payload JSON (Dynamic Code Fence) with Section Dividers
   if (payload) {
     const jsonStr = JSON.stringify(payload, null, 2);
     const fence = getSafeCodeFence(jsonStr);

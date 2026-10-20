@@ -17,20 +17,20 @@ export interface ClaimSummary {
 export function extractClaimSummaries(assessment: RecognizedToken): ClaimSummary[] {
   const summaries: ClaimSummary[] = [];
   if (assessment.subject) {
-    summaries.push({ icon: 'person', name: 'Subject (sub)', value: assessment.subject });
+    summaries.push({ icon: 'account', name: 'Subject (sub)', value: assessment.subject });
   }
   if (assessment.roles.length > 0) {
     summaries.push({ icon: 'shield', name: 'Roles', value: assessment.roles.join(', ') });
   }
+  if (assessment.expiresAtIso) {
+    summaries.push({ icon: 'clock', name: 'Expiration (exp)', value: assessment.expiresAtIso });
+  }
   if (assessment.issuer) {
-    summaries.push({ icon: 'globe', name: 'Issuer (iss)', value: assessment.issuer });
+    summaries.push({ icon: 'verified', name: 'Issuer (iss)', value: assessment.issuer });
   }
   if (assessment.audience) {
     const audStr = Array.isArray(assessment.audience) ? assessment.audience.join(', ') : assessment.audience;
     summaries.push({ icon: 'organization', name: 'Audience (aud)', value: audStr });
-  }
-  if (assessment.expiresAtIso) {
-    summaries.push({ icon: 'clock', name: 'Expiration (exp)', value: assessment.expiresAtIso });
   }
   const kid = assessment.signature?.keyId ?? assessment.keyId;
   if (kid) {
@@ -82,7 +82,7 @@ export function resolveTokenFromText(
 }
 
 /**
- * Opens formatted decoded header and payload JSON in a new untitled document tab.
+ * Opens formatted decoded header and payload JSON in a side editor split tab.
  */
 export async function openDecodedTokenInEditor(
   rawToken: string,
@@ -114,7 +114,11 @@ export async function openDecodedTokenInEditor(
       language: 'json',
       content
     });
-    await vscodeRef.window.showTextDocument(doc, { preview: false });
+    await vscodeRef.window.showTextDocument(doc, {
+      viewColumn: vscodeRef.ViewColumn.Beside,
+      preview: false
+    });
   }
 }
+
 

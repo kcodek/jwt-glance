@@ -1,54 +1,42 @@
 import * as vscode from 'vscode';
-import { findCandidateTokens, assessToken } from '../core/index';
+import { assessToken, findCandidateTokens } from '../core/index';
 import { formatBadgeLabel } from './badgeFormatter';
 import { isDocumentEligible } from './filter';
+import { DocumentTokenIndex, type CachedTokenEntry } from './tokenIndex';
 import {
   SemanticTier,
   getTokenSemanticTier
 } from './semanticTier';
+import { getJwtGlanceSetting, getGlanceClaims } from './configHelper';
 
 interface TierDecorationConfig {
   color: vscode.ThemeColor;
-  backgroundColor: vscode.ThemeColor;
-  borderColor: vscode.ThemeColor;
   overviewRulerColor: vscode.ThemeColor;
 }
 
 const TIER_THEME_COLORS: Record<SemanticTier, TierDecorationConfig> = {
   ACTIVE: {
     color: new vscode.ThemeColor('testing.iconPassed'),
-    backgroundColor: new vscode.ThemeColor('diffEditor.insertedLineBackground'),
-    borderColor: new vscode.ThemeColor('testing.iconPassed'),
     overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.addedForeground')
   },
   EXPIRING_SOON: {
     color: new vscode.ThemeColor('editorWarning.foreground'),
-    backgroundColor: new vscode.ThemeColor('inputValidation.warningBackground'),
-    borderColor: new vscode.ThemeColor('editorWarning.foreground'),
     overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.warningForeground')
   },
   EXPIRED: {
     color: new vscode.ThemeColor('editorError.foreground'),
-    backgroundColor: new vscode.ThemeColor('diffEditor.removedLineBackground'),
-    borderColor: new vscode.ThemeColor('editorError.foreground'),
     overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.errorForeground')
   },
   UNSECURED: {
     color: new vscode.ThemeColor('errorForeground'),
-    backgroundColor: new vscode.ThemeColor('inputValidation.errorBackground'),
-    borderColor: new vscode.ThemeColor('errorForeground'),
     overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.errorForeground')
   },
   NO_EXPIRATION: {
     color: new vscode.ThemeColor('editorInfo.foreground'),
-    backgroundColor: new vscode.ThemeColor('inputValidation.infoBackground'),
-    borderColor: new vscode.ThemeColor('editorInfo.foreground'),
     overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.infoForeground')
   },
   INDETERMINATE: {
     color: new vscode.ThemeColor('editorInlayHint.foreground'),
-    backgroundColor: new vscode.ThemeColor('editorInlayHint.background'),
-    borderColor: new vscode.ThemeColor('editorInlayHint.foreground'),
     overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.infoForeground')
   }
 };
@@ -66,22 +54,21 @@ export class JwtDecorationProvider {
   private readonly badgeDecorationTypes = new Map<SemanticTier, vscode.TextEditorDecorationType>();
   private readonly overviewRulerDecorationTypes = new Map<SemanticTier, vscode.TextEditorDecorationType>();
   private readonly dimmedExpiredDecoration: vscode.TextEditorDecorationType;
+  private readonly tokenIndex: DocumentTokenIndex;
 
-  constructor() {
+  constructor(tokenIndex?: DocumentTokenIndex) {
+    this.tokenIndex = tokenIndex ?? new DocumentTokenIndex();
+
     for (const tier of ALL_TIERS) {
       const colors = TIER_THEME_COLORS[tier];
 
-      // 1. Inline pill badge decoration (for position: left or both) — no overview ruler attached
+      // 1. Inline colored text decoration (for position: left or both) — clean text without background boxes
       this.badgeDecorationTypes.set(
         tier,
         vscode.window.createTextEditorDecorationType({
           before: {
             color: colors.color,
-            backgroundColor: colors.backgroundColor,
-            border: '1px solid',
-            borderColor: colors.borderColor,
-            fontWeight: '500',
-            margin: '0 6px 0 0'
+            margin: '0 8px 0 0'
           }
         })
       );
@@ -113,12 +100,13 @@ export class JwtDecorationProvider {
       return;
     }
 
-    const config = vscode.workspace.getConfiguration('jwtGlance');
-    const position = config.get<string>('position', 'top');
-    const showOverviewRuler = config.get<boolean>('overviewRuler', true);
-    const dimExpired = config.get<boolean>('dimExpiredTokens', true);
-    const expiringSoonThreshold = config.get<number>('expiringSoonThreshold', 1800);
-    const maxLineLength = config.get<number>('maxLineLength', 10000);
+    const position = getJwtGlanceSetting<string>('position', 'top');
+    const showOverviewRuler = getJwtGlanceSetting<boolean>('overviewRuler', true);
+    const maxOverviewRulerTokens = getJwtGlanceSetting<number>('maxOverviewRulerTokens', 50);
+    const dimExpired = getJwtGlanceSetting<boolean>('dimExpiredTokens', true);
+    const expiringSoonThreshold = getJwtGlanceSetting<number>('expiringSoonThreshold', 1800);
+    const glanceClaims = getGlanceClaims();
+    const maxGlanceClaims = getJwtGlanceSetting<number>('maxGlanceClaims', 3);
 
     const showBadges = position === 'left' || position === 'both';
     const nowEpoch = Math.floor(Date.now() / 1000);
@@ -132,7 +120,10 @@ export class JwtDecorationProvider {
       overviewRulerByTier.set(tier, []);
     }
 
-    // Scan visible ranges (plus 10 lines padding buffer) for high performance
+    const needsFullDocument = showOverviewRuler && maxOverviewRulerTokens > 0;
+    const isCached = this.tokenIndex.hasTokens(document);
+
+    // Compute visible lines (+/- 10 buffer) used for inline badges and viewport-lazy scanning
     const ranges = editor.visibleRanges && editor.visibleRanges.length > 0
       ? editor.visibleRanges
       : [new vscode.Range(0, 0, Math.min(document.lineCount - 1, 100), 0)];
@@ -146,40 +137,86 @@ export class JwtDecorationProvider {
       }
     }
 
-    for (const lineNum of linesToScan) {
-      const line = document.lineAt(lineNum);
-      if (line.text.length > maxLineLength) {
-        continue;
+    let candidateTokens: CachedTokenEntry[];
+    if (needsFullDocument || isCached) {
+      candidateTokens = this.tokenIndex.getTokens(document);
+    } else {
+      // Viewport-scoped scan: only read and scan lines in visibleRanges +/- 10 lines
+      // when no full-document consumer is active, preserving high performance on large files.
+      const maxLineLength = getJwtGlanceSetting<number>('maxLineLength', 10000);
+      const viewportEntries: CachedTokenEntry[] = [];
+      for (const lineNum of linesToScan) {
+        if (lineNum >= document.lineCount) continue;
+        const lineText = document.lineAt(lineNum).text;
+        if (!lineText || lineText.length > maxLineLength) continue;
+        const candidates = findCandidateTokens(lineText);
+        for (const c of candidates) {
+          viewportEntries.push({
+            raw: c.raw,
+            startIndex: c.startIndex,
+            endIndex: c.endIndex,
+            lineNum
+          });
+        }
       }
+      candidateTokens = viewportEntries;
+    }
 
-      const candidates = findCandidateTokens(line.text);
-      for (const candidate of candidates) {
+    // 1. Overview Ruler: covers the entire document up to maxOverviewRulerTokens
+    if (needsFullDocument) {
+      let rulerCount = 0;
+      for (const candidate of candidateTokens) {
+        if (rulerCount >= maxOverviewRulerTokens) {
+          break;
+        }
         const assessment = assessToken(candidate.raw, nowEpoch);
         if (assessment.recognized) {
           const tier = getTokenSemanticTier(assessment, expiringSoonThreshold);
-          const badgeText = `[${formatBadgeLabel(assessment)}]`;
           const range = new vscode.Range(
-            lineNum,
+            candidate.lineNum,
             candidate.startIndex,
-            lineNum,
+            candidate.lineNum,
+            candidate.endIndex
+          );
+          overviewRulerByTier.get(tier)?.push({ range });
+          rulerCount++;
+        }
+      }
+    }
+
+    // 2. Viewport-lazy Inline Badges & Expired Text Dimming (only for visible lines +/- 10 lines)
+    if (showBadges || dimExpired) {
+      for (const candidate of candidateTokens) {
+        if ((needsFullDocument || isCached) && !linesToScan.has(candidate.lineNum)) {
+          continue;
+        }
+
+        const assessment = assessToken(candidate.raw, nowEpoch);
+        if (assessment.recognized) {
+          const tier = getTokenSemanticTier(assessment, expiringSoonThreshold);
+          const range = new vscode.Range(
+            candidate.lineNum,
+            candidate.startIndex,
+            candidate.lineNum,
             candidate.endIndex
           );
 
-          if (tier === 'EXPIRED') {
+          if (dimExpired && tier === 'EXPIRED') {
             expiredRanges.push(range);
           }
 
-          const options: vscode.DecorationOptions = {
-            range,
-            renderOptions: {
-              before: {
-                contentText: ` ${badgeText} `
+          if (showBadges) {
+            const badgeText = formatBadgeLabel(assessment, { glanceClaims, maxGlanceClaims });
+            const options: vscode.DecorationOptions = {
+              range,
+              renderOptions: {
+                before: {
+                  contentText: `${badgeText} `
+                }
               }
-            }
-          };
-
-          badgeDecorationsByTier.get(tier)?.push(options);
-          overviewRulerByTier.get(tier)?.push({ range });
+            };
+            badgeDecorationsByTier.get(tier)?.push(options);
+          }
         }
       }
     }

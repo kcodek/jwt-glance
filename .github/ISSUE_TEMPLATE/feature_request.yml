@@ -1,0 +1,34 @@
+name: Feature Request
+description: Propose a new workflow enhancement or capability for JWT Glance
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 💡 Feature Proposal Guidelines
+        JWT Glance is strictly **zero-dependency, offline-first, and ultra-lightweight**.
+        Features requiring remote network calls, heavy webviews, or external runtime libraries are out of scope.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What friction or developer workflow problem does this proposal address?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution / User Experience
+      description: How should this feature work in the editor? (e.g. CodeLens, command, hover card, settings)
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or workarounds you've used?
+    validations:
+      required: false

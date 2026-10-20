@@ -2,21 +2,29 @@ import * as vscode from 'vscode';
 import { JwtDecorationProvider } from './decorator';
 import { JwtCodeLensProvider } from './codeLens';
 import { JwtHoverProvider } from './hover';
+import { DocumentTokenIndex } from './tokenIndex';
+import { JwtDiagnosticsProvider } from './diagnostics';
+import { JwtStatusBarItem } from './statusBar';
 import {
   handleInspectTokenCommand,
   inspectAtCursor,
   inspectFromClipboard,
   toggleAmbientLens,
-  copyRedactedToken
+  copyRedactedToken,
+  copyBearerToken,
+  chooseGlanceClaim
 } from './commands';
 
 const DOCUMENT_SELECTOR: vscode.DocumentSelector = '*';
 const INVALIDATION_INTERVAL_MS = 60_000; // 60 seconds
 
 export function activate(context: vscode.ExtensionContext): void {
-  const decorator = new JwtDecorationProvider();
-  const codeLensProvider = new JwtCodeLensProvider();
+  const tokenIndex = new DocumentTokenIndex();
+  const decorator = new JwtDecorationProvider(tokenIndex);
+  const codeLensProvider = new JwtCodeLensProvider(tokenIndex);
   const hoverProvider = new JwtHoverProvider();
+  const diagnosticsProvider = new JwtDiagnosticsProvider(tokenIndex, context);
+  const statusBarItem = new JwtStatusBarItem();
 
   // Register CodeLens Provider (Renders on top of the line)
   const codeLensDisposable = vscode.languages.registerCodeLensProvider(
@@ -51,9 +59,19 @@ export function activate(context: vscode.ExtensionContext): void {
     copyRedactedToken
   );
 
+  const copyBearerTokenCmd = vscode.commands.registerCommand(
+    'jwtGlance.copyBearerToken',
+    copyBearerToken
+  );
+
   const toggleEnabledCmd = vscode.commands.registerCommand(
     'jwtGlance.toggleEnabled',
     toggleAmbientLens
+  );
+
+  const chooseGlanceClaimCmd = vscode.commands.registerCommand(
+    'jwtGlance.chooseGlanceClaim',
+    chooseGlanceClaim
   );
 
   // Update decorations when editor visible ranges change (scrolling)
@@ -65,21 +83,42 @@ export function activate(context: vscode.ExtensionContext): void {
   const activeEditorDisposable = vscode.window.onDidChangeActiveTextEditor((editor) => {
     if (editor) {
       decorator.updateDecorations(editor);
+      diagnosticsProvider.updateDiagnostics(editor.document);
     }
   });
 
-  // Debounced update on document edits (150ms)
-  let debounceTimeout: NodeJS.Timeout | undefined;
+  // Debounced update on document edits per document URI (150ms)
+  const debounceTimeouts = new Map<string, NodeJS.Timeout>();
   const docChangeDisposable = vscode.workspace.onDidChangeTextDocument((event) => {
-    const activeEditor = vscode.window.activeTextEditor;
-    if (activeEditor && activeEditor.document === event.document) {
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-      }
-      debounceTimeout = setTimeout(() => {
-        decorator.updateDecorations(activeEditor);
-      }, 150);
+    tokenIndex.invalidate(event.document.uri);
+    const uriKey = event.document.uri.toString();
+    const existing = debounceTimeouts.get(uriKey);
+    if (existing) {
+      clearTimeout(existing);
     }
+    const timeout = setTimeout(() => {
+      debounceTimeouts.delete(uriKey);
+      // Refresh visible editors matching the changed document (handles active editor & split panes)
+      for (const editor of vscode.window.visibleTextEditors) {
+        if (editor.document === event.document) {
+          decorator.updateDecorations(editor);
+        }
+      }
+      diagnosticsProvider.updateDiagnostics(event.document);
+    }, 150);
+    debounceTimeouts.set(uriKey, timeout);
+  });
+
+  // Evict cached tokens and clear pending debounce timers on document close
+  const docCloseDisposable = vscode.workspace.onDidCloseTextDocument((doc) => {
+    const uriKey = doc.uri.toString();
+    const existing = debounceTimeouts.get(uriKey);
+    if (existing) {
+      clearTimeout(existing);
+      debounceTimeouts.delete(uriKey);
+    }
+    tokenIndex.invalidate(doc.uri);
+    diagnosticsProvider.clear(doc.uri);
   });
 
   // Update when visible editors change (e.g. split panes)
@@ -92,8 +131,11 @@ export function activate(context: vscode.ExtensionContext): void {
   // Listen for configuration changes
   const configDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
     if (e.affectsConfiguration('jwtGlance')) {
+      tokenIndex.clear();
       codeLensProvider.refresh();
       decorator.updateAllVisibleEditors();
+      diagnosticsProvider.updateAllOpenDocuments();
+      statusBarItem.update();
     }
   });
 
@@ -101,27 +143,36 @@ export function activate(context: vscode.ExtensionContext): void {
   const timer = setInterval(() => {
     codeLensProvider.refresh();
     decorator.updateAllVisibleEditors();
+    diagnosticsProvider.updateAllOpenDocuments();
   }, INVALIDATION_INTERVAL_MS);
 
   const cleanupDisposable = new vscode.Disposable(() => {
     clearInterval(timer);
-    if (debounceTimeout) {
-      clearTimeout(debounceTimeout);
+    for (const timeout of debounceTimeouts.values()) {
+      clearTimeout(timeout);
     }
+    debounceTimeouts.clear();
     decorator.dispose();
+    tokenIndex.clear();
+    diagnosticsProvider.dispose();
+    statusBarItem.dispose();
   });
 
   context.subscriptions.push(
+    statusBarItem,
     codeLensDisposable,
     hoverDisposable,
     inspectTokenCmd,
     inspectAtCursorCmd,
     inspectFromClipboardCmd,
     copyRedactedTokenCmd,
+    copyBearerTokenCmd,
+    chooseGlanceClaimCmd,
     toggleEnabledCmd,
     visibleRangesDisposable,
     activeEditorDisposable,
     docChangeDisposable,
+    docCloseDisposable,
     visibleEditorsDisposable,
     configDisposable,
     cleanupDisposable
@@ -130,6 +181,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // Immediate initial render on active editor
   if (vscode.window.activeTextEditor) {
     decorator.updateDecorations(vscode.window.activeTextEditor);
+    diagnosticsProvider.updateDiagnostics(vscode.window.activeTextEditor.document);
   }
 }
 

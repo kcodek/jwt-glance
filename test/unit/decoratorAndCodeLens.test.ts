@@ -6,17 +6,20 @@ interface TestConfig {
   enabled: boolean;
   position: 'top' | 'left' | 'both';
   overviewRuler: boolean;
+  maxOverviewRulerTokens: number;
   dimExpiredTokens: boolean;
   expiringSoonThreshold: number;
   maxLineLength: number;
   languages: string[];
   exclude: string[];
+  glanceClaims?: string | string[];
 }
 
 const currentConfig: TestConfig = {
   enabled: true,
-  position: 'both',
+  position: 'top',
   overviewRuler: true,
+  maxOverviewRulerTokens: 50,
   dimExpiredTokens: true,
   expiringSoonThreshold: 1800,
   maxLineLength: 10000,
@@ -97,6 +100,7 @@ interface MockDecType {
   opts: {
     before?: Record<string, unknown>;
     overviewRulerColor?: unknown;
+    overviewRulerLane?: unknown;
     opacity?: string;
   };
 }
@@ -133,7 +137,7 @@ test('position: "both" produces exactly 1 CodeLens, 1 inline badge, and 1 overvi
     }
   }
 
-  assert.equal(badgeCount, 1, 'Exactly one inline pill badge must be applied');
+  assert.equal(badgeCount, 1, 'Exactly one inline badge must be applied');
   assert.equal(rulerCount, 1, 'Exactly one overview ruler indicator must be applied without duplicates');
 });
 
@@ -233,4 +237,66 @@ test('position: "left" generates inline badge and ruler marker, but zero CodeLen
   }
 
   assert.equal(badgeCount, 1, 'Exactly one inline badge must be rendered for position: left');
+});
+
+test('maxOverviewRulerTokens cap restricts the number of scrollbar overview markers', () => {
+  const decorator = new JwtDecorationProvider();
+  const appliedDecorations = new Map<MockDecType, unknown[]>();
+
+  const multiTokenLines: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    multiTokenLines.push(`TOKEN_${i}="${sampleToken}"`);
+  }
+
+  const multiDoc = {
+    uri: { fsPath: '/workspace/fixtures.env', path: '/workspace/fixtures.env', toString: () => 'file:///workspace/fixtures.env' },
+    languageId: 'properties',
+    version: 1,
+    lineCount: multiTokenLines.length,
+    lineAt: (i: number) => ({ text: multiTokenLines[i] || '' }),
+    offsetAt: () => 1000
+  };
+
+  const mockEditor = {
+    document: multiDoc,
+    visibleRanges: [new mockVscode.Range(0, 0, 1, 0)],
+    setDecorations: (decType: MockDecType, list: unknown[]) => {
+      appliedDecorations.set(decType, list);
+    }
+  };
+
+  currentConfig.position = 'top';
+  currentConfig.overviewRuler = true;
+  currentConfig.maxOverviewRulerTokens = 3; // Strict cap of 3
+
+  decorator.updateDecorations(mockEditor);
+
+  let rulerCount = 0;
+  for (const [decType, list] of appliedDecorations) {
+    if (list && list.length > 0 && decType.opts.overviewRulerLane) {
+      rulerCount += list.length;
+    }
+  }
+
+  assert.equal(rulerCount, 3, 'Overview ruler markers must be strictly capped at maxOverviewRulerTokens');
+});
+
+test('glanceClaims config selects requested claim field in CodeLens', () => {
+  const codeLensProvider = new JwtCodeLensProvider();
+  const tokenWithCustomClaims = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: 'uuid-1234', email: 'custom@example.com', exp: 253402300799 })}.sig`;
+  const doc = {
+    uri: { fsPath: '/workspace/custom.env', path: '/workspace/custom.env', toString: () => 'file:///workspace/custom.env' },
+    languageId: 'properties',
+    lineCount: 1,
+    lineAt: () => ({ text: `JWT="${tokenWithCustomClaims}"` }),
+    offsetAt: () => 100
+  };
+
+  currentConfig.position = 'top';
+  currentConfig.glanceClaims = ['email', 'sub'];
+
+  const lenses = codeLensProvider.provideCodeLenses(doc, { isCancellationRequested: false });
+  assert.equal(lenses.length, 1);
+  const title = (lenses[0].command as { title: string }).title;
+  assert.ok(title.includes('custom@example.com'), `CodeLens title must include custom email claim: ${title}`);
 });

@@ -1,0 +1,43 @@
+name: Bug Report
+description: Report an issue, rendering bug, or incorrect claim parsing in JWT Glance
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🔒 Security & Privacy Notice
+        **NEVER share live production tokens, private keys, or sensitive customer PII.**
+        Use the `JWT Glance: Copy Redacted Token` command to sanitize custom claims before pasting diagnostics.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: What happened? What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: token-sample
+    attributes:
+      label: Redacted Token or Minimal Reproducible Example
+      description: Paste a sanitized/mock JWT or code snippet that reproduces the issue.
+      render: text
+    validations:
+      required: false
+
+  - type: input
+    id: vscode-version
+    attributes:
+      label: VS Code Version
+      placeholder: e.g. 1.95.0
+    validations:
+      required: false
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      placeholder: e.g. macOS 15.1 (Apple Silicon) / Windows 11 / Ubuntu 24.04
+    validations:
+      required: false

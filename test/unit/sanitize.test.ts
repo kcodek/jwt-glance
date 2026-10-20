@@ -4,12 +4,14 @@ import { sanitizeMarkdown, createRedactedJwt } from '../../src/core/sanitize';
 import { parseJwt } from '../../src/core/parse';
 
 test('sanitizeMarkdown escapes markdown formatting characters', () => {
-  const untrusted = 'admin | *bold* _italic_ `code` [link](http://evil.com) <script>';
+  const untrusted = 'admin | *bold* _italic_ `code` [link](http://evil.com) <script>\n\n# Heading';
   const sanitized = sanitizeMarkdown(untrusted);
   assert.ok(!sanitized.includes('*bold*'));
   assert.ok(!sanitized.includes('`code`'));
   assert.ok(!sanitized.includes('[link]'));
   assert.ok(!sanitized.includes('<script>'));
+  assert.ok(!sanitized.includes('\n'));
+  assert.ok(sanitized.includes('\\# Heading'));
   assert.ok(sanitized.includes('\\|'));
 });
 

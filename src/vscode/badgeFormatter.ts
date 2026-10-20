@@ -1,4 +1,5 @@
 import type { RecognizedToken } from '../core/types';
+import { resolveGlanceClaims } from '../core/index';
 import { getTokenSemanticTier, getSemanticCodicon } from './semanticTier';
 
 export function formatRelativeDuration(seconds: number): string {
@@ -26,6 +27,8 @@ export function formatRelativeDuration(seconds: number): string {
 export interface BadgeFormatOptions {
   showUncheckedStatus?: boolean;
   omitPrefix?: boolean;
+  glanceClaims?: string | string[];
+  maxGlanceClaims?: number;
 }
 
 export function formatBadgeLabel(
@@ -87,9 +90,22 @@ export function formatBadgeLabel(
     parts.push('ISS mismatch');
   }
 
-  const subject = token.claims?.subject ?? token.subject;
-  if (subject && subject.trim().length > 0) {
-    parts.push(subject.trim());
+  const configuredClaims = options?.glanceClaims ?? ['sub'];
+  const maxGlanceClaims = options?.maxGlanceClaims ?? 3;
+  const candidates = Array.isArray(configuredClaims) ? configuredClaims : [configuredClaims];
+  const claimTexts = resolveGlanceClaims(token.payload, candidates, maxGlanceClaims);
+
+  if (claimTexts.length === 0 && candidates.includes('sub')) {
+    const fallbackSub = token.claims?.subject ?? token.subject;
+    if (fallbackSub && fallbackSub.trim().length > 0) {
+      claimTexts.push(fallbackSub.trim());
+    }
+  }
+
+  for (const text of claimTexts) {
+    if (text && text.trim().length > 0) {
+      parts.push(text.trim());
+    }
   }
 
   // Only append temporal status if signature didn't fail
@@ -100,7 +116,12 @@ export function formatBadgeLabel(
   return parts.join(' · ');
 }
 
-export function formatCodeLensLabel(token: RecognizedToken, expiringSoonSeconds = 1800): string {
+export function formatCodeLensLabel(
+  token: RecognizedToken,
+  expiringSoonSeconds = 1800,
+  glanceClaims?: string | string[],
+  maxGlanceClaims = 3
+): string {
   const tier = getTokenSemanticTier(token, expiringSoonSeconds);
   let icon = getSemanticCodicon(tier);
   if (token.signature?.verification === 'VERIFIED') {
@@ -108,6 +129,6 @@ export function formatCodeLensLabel(token: RecognizedToken, expiringSoonSeconds 
   } else if (token.signature?.verification === 'FAILED') {
     icon = '$(error)';
   }
-  const label = formatBadgeLabel(token);
+  const label = formatBadgeLabel(token, { glanceClaims, maxGlanceClaims });
   return `${icon} ${label}`;
 }

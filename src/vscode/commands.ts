@@ -7,6 +7,12 @@ import {
   resolveTokenFromText,
   openDecodedTokenInEditor
 } from './commandHelpers';
+import { manageGlanceClaimPriorities } from './claimPriorityManager';
+import {
+  getJwtGlanceSetting,
+  updateJwtGlanceSetting,
+  getGlanceClaims
+} from './configHelper';
 
 export interface JwtActionItem extends vscode.QuickPickItem {
   action?: () => Promise<void> | void;
@@ -40,22 +46,42 @@ export async function showJwtActionPalette(
 
   const items: (JwtActionItem | vscode.QuickPickItem)[] = [
     {
-      label: 'Actions',
+      label: 'Primary Actions',
       kind: vscode.QuickPickItemKind.Separator
     },
     {
-      label: '$(json) Open Decoded Token in New Editor',
-      description: 'View full formatted header and payload JSON in a dedicated tab',
+      label: '$(split-horizontal) Open Decoded JSON (Split View)',
+      description: 'Side-by-side inspection',
       action: async () => {
         await openDecodedTokenInEditor(rawToken, assessment, vscode);
       }
-    }
+    },
+    {
+      label: '$(clippy) Copy Decoded Payload (JSON)',
+      description: 'Copy raw claims JSON to clipboard',
+      buttons: [copyButton],
+      action: async () => {
+        const parsed = parseJwt(rawToken);
+        if (!('reason' in parsed)) {
+          await vscode.env.clipboard.writeText(JSON.stringify(parsed.payload, null, 2));
+          vscode.window.showInformationMessage('JWT Glance: Decoded payload copied to clipboard.');
+        }
+      }
+    },
+    {
+      label: '$(key) Copy as Authorization: Bearer Header',
+      description: 'Fastest clipboard action for API calls',
+      action: async () => {
+        await vscode.env.clipboard.writeText(`Authorization: Bearer ${rawToken}`);
+        vscode.window.showInformationMessage('JWT Glance: Copied "Authorization: Bearer <token>" to clipboard.');
+      }
+    },
   ];
 
   const claimSummaries = extractClaimSummaries(assessment);
   if (claimSummaries.length > 0) {
     items.push({
-      label: 'Claims',
+      label: 'Claims (Quick-Copy)',
       kind: vscode.QuickPickItemKind.Separator
     });
     for (const claim of claimSummaries) {
@@ -73,24 +99,12 @@ export async function showJwtActionPalette(
 
   items.push(
     {
-      label: 'Export & Diagnostics',
+      label: 'Safe Sharing',
       kind: vscode.QuickPickItemKind.Separator
     },
     {
-      label: '$(clippy) Copy Decoded Payload (JSON)',
-      description: 'Formatted payload claims JSON',
-      buttons: [copyButton],
-      action: async () => {
-        const parsed = parseJwt(rawToken);
-        if (!('reason' in parsed)) {
-          await vscode.env.clipboard.writeText(JSON.stringify(parsed.payload, null, 2));
-          vscode.window.showInformationMessage('JWT Glance: Decoded payload copied to clipboard.');
-        }
-      }
-    },
-    {
       label: '$(shield) Copy Redacted Diagnostic Token',
-      description: 'Safe for sharing — preserves timing/headers with sensitive claims & signature redacted',
+      description: 'Preserves headers & exp, redacts secrets',
       buttons: [copyButton],
       action: async () => {
         const redaction = createRedactedJwt(rawToken);
@@ -101,12 +115,27 @@ export async function showJwtActionPalette(
           vscode.window.showErrorMessage(`JWT Glance: Failed to redact token: ${redaction.reason}`);
         }
       }
+    },
+    {
+      label: 'Configuration',
+      kind: vscode.QuickPickItemKind.Separator
+    },
+    {
+      label: '$(pin) Choose Claim for Badge Display...',
+      description: 'Configure and reorder claim priority (name, roles, sub)',
+      action: async () => {
+        await chooseGlanceClaim(rawToken);
+      }
     }
   );
 
+
+
   return new Promise<void>((resolve) => {
+    const glanceClaims = getGlanceClaims(vscode);
+    const maxGlanceClaims = getJwtGlanceSetting<number>('maxGlanceClaims', 3, vscode);
     const qp = vscode.window.createQuickPick<JwtActionItem>();
-    qp.title = `JWT Glance: ${formatBadgeLabel(assessment, { omitPrefix: true })}`;
+    qp.title = `JWT Glance: ${formatBadgeLabel(assessment, { omitPrefix: true, glanceClaims, maxGlanceClaims })}`;
     qp.placeholder = 'Select an action or click copy on any claim';
     qp.items = items;
 
@@ -203,9 +232,8 @@ export async function inspectFromClipboard(): Promise<void> {
  * Command: JWT Glance: Toggle Ambient Lens
  */
 export async function toggleAmbientLens(): Promise<void> {
-  const config = vscode.workspace.getConfiguration('jwtGlance');
-  const current = config.get<boolean>('enabled', true);
-  await config.update('enabled', !current, vscode.ConfigurationTarget.Global);
+  const current = getJwtGlanceSetting('enabled', true, vscode);
+  await updateJwtGlanceSetting('enabled', !current, vscode.ConfigurationTarget.Global, vscode);
   vscode.window.setStatusBarMessage(
     `JWT Glance: Ambient inspection ${!current ? 'Enabled' : 'Disabled'}`,
     3000
@@ -260,6 +288,63 @@ export async function copyRedactedToken(): Promise<void> {
     vscode.window.showErrorMessage(`JWT Glance: Failed to redact token: ${redaction.reason}`);
   }
 }
+
+/**
+ * Command: JWT Glance: Copy as Authorization: Bearer Header
+ */
+export async function copyBearerToken(rawTokenArg?: string): Promise<void> {
+  let candidate = rawTokenArg;
+  const now = Math.floor(Date.now() / 1000);
+
+  if (!candidate) {
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+      const selection = editor.selection;
+      if (!selection.isEmpty) {
+        const selectedText = editor.document.getText(selection).trim();
+        const resolved = resolveTokenFromText(selectedText, now);
+        if (resolved) {
+          candidate = resolved.raw;
+        }
+      }
+
+      if (!candidate) {
+        const line = editor.document.lineAt(selection.active.line);
+        const target = resolveTokenAtPosition(line.text, selection.active.character);
+        if (target) {
+          candidate = target.raw;
+        }
+      }
+    }
+  }
+
+  if (!candidate) {
+    const clipboardText = await vscode.env.clipboard.readText();
+    const resolved = resolveTokenFromText(clipboardText || '', now);
+    if (resolved) {
+      candidate = resolved.raw;
+    }
+  }
+
+  if (!candidate) {
+    vscode.window.showWarningMessage('JWT Glance: No token found under cursor or in clipboard.');
+    return;
+  }
+
+  const bearerHeader = `Authorization: Bearer ${candidate}`;
+  await vscode.env.clipboard.writeText(bearerHeader);
+  vscode.window.showInformationMessage('JWT Glance: Copied "Authorization: Bearer <token>" to clipboard.');
+}
+
+/**
+ * Command: JWT Glance: Choose Claim for Badge Display
+ * Launches the interactive Claim Priority Editor to reorder, add, remove,
+ * or configure fallback for glance claims.
+ */
+export async function chooseGlanceClaim(rawTokenArg?: string): Promise<string[] | undefined> {
+  return manageGlanceClaimPriorities(rawTokenArg, vscode);
+}
+
 
 /**
  * Handler for CodeLens or badge click

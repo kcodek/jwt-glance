@@ -19,11 +19,12 @@ Thumbs.db
 # Agent scratch / internals
 .system_generated/
 .agents/
-
+*.mov
 
 # Environment files
 .env*
 
 # Local notes / planning
 TODO.md
+plan.md
 docs/superpowers/

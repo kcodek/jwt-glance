@@ -14,10 +14,10 @@ esbuild.js
 **/*.map
 .env*
 images/*.svg
+images/*.mov
+*.mov
 CONTRIBUTING.md
 TODO.md
+plan.md
 docs/**
 node_modules/**
-
-
-

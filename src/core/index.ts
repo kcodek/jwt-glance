@@ -8,6 +8,8 @@ export * from './parse';
 export * from './temporal';
 export * from './sanitize';
 export * from './filter';
+export * from './policy';
+export * from './claimPicker';
 
 
 function extractRoles(payload: Record<string, unknown>): string[] {
@@ -100,6 +102,7 @@ export function assessToken(
 
   const recognized: RecognizedToken = {
     recognized: true,
+    payload,
     recognition: {
       recognized: true,
       format: 'JWT'

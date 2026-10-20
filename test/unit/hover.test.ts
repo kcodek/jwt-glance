@@ -194,3 +194,38 @@ test('getSafeCodeFence dynamically extends backtick fences when payload contains
   const md = formatHoverContent(token, { query: '```injection```' });
   assert.ok(md.includes('````json\n{\n  "query": "```injection```"\n}\n````'));
 });
+
+test('formatHoverContent renders policy alerts when policy diagnostics are provided', () => {
+  const token = createTestToken({ issuer: 'rogue-auth' });
+  const md = formatHoverContent(token, { sub: 'test' }, {
+    policyDiagnostics: [
+      {
+        code: 'ISSUER_MISMATCH',
+        message: 'Token issuer "rogue-auth" does not match expected "auth.company.com"',
+        severity: 'warning'
+      }
+    ]
+  });
+
+  assert.ok(md.includes('⚠️ **Policy Alerts:**'));
+  assert.ok(md.includes('`ISSUER_MISMATCH`: Token issuer "rogue-auth" does not match expected "auth.company.com"'));
+});
+
+test('formatHoverContent sanitizes malicious markdown links and newlines in policy alert messages', () => {
+  const token = createTestToken({ issuer: '[Malicious Link](https://evil.com)\n\n# Spoofed Heading' });
+  const md = formatHoverContent(token, { sub: 'test' }, {
+    policyDiagnostics: [
+      {
+        code: 'ISSUER_MISMATCH',
+        message: 'Token issuer "[Malicious Link](https://evil.com)\n\n# Spoofed Heading" does not match policy expected issuer "auth.example.com"',
+        severity: 'warning'
+      }
+    ]
+  });
+
+  // Verify markdown links and headings are sanitized and newlines stripped
+  assert.ok(!md.includes('[Malicious Link](https://evil.com)'));
+  assert.ok(!md.includes('\n\n# Spoofed Heading'));
+  assert.ok(md.includes('\\[Malicious Link\\]\\(https://evil.com\\)'));
+  assert.ok(md.includes('\\# Spoofed Heading'));
+});
